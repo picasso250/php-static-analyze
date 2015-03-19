@@ -11,8 +11,11 @@ $parser = new PhpParser\Parser(new PhpParser\Lexer);
 try {
     $stmts = $parser->parse($code);
     // unreachable($stmts[0]->stmts);
-    check_inner_type($stmts[0]->stmts);
-
+    foreach ($stmts as $stmt) {
+        if ($stmt instanceof PhpParser\Node\Stmt\Function_) {
+            check_inner_type($stmt->stmts);
+        }
+    }
 } catch (PhpParser\Error $e) {
     echo 'Parse Error: ', $e->getMessage();
 }
@@ -36,6 +39,7 @@ function get_all_func(array $stmts)
 
 function check_inner_type($stmts)
 {
+    $table = [];
     foreach ($stmts as $stmt) {
         if ($stmt instanceof PhpParser\Node\Expr\Assign) {
             // fix: list(a, b) = $a;
@@ -44,6 +48,7 @@ function check_inner_type($stmts)
                 $table[$stmt->var->name]->addExpr($stmt->expr);
             } else {
                 // echo "createFromExpr {$stmt->var->name}\n";
+                // echo $stmt->getAttribute('startLine'), "\n";
                 $table[$stmt->var->name] = Value::createFromExpr($stmt->expr);
             }
         }
@@ -52,8 +57,6 @@ function check_inner_type($stmts)
         if ($stmt instanceof PhpParser\Node\Stmt\If_) {
             $cond = $stmt->cond;
             // print_r($cond);exit;
-            // print_r($cond);
-            // exit;
             check_cond($cond, $table);
         }
     }

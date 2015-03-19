@@ -12,14 +12,22 @@ class Value
 			$this->types[] = $type;
 		}
 	}
+	public static $map = [
+		'scalar' => ['Scalar_LNumber', 'Scalar_String'],
+		'complex' => ['Expr_Array'],
+		'func' => ['Expr_FuncCall'],
+	];
+	public static function getAllType()
+	{
+		$ret = [];
+		foreach (self::$map as $types) {
+			$ret = array_merge($ret, $types);
+		}
+		return $ret;
+	}
 	public static function getType($class)
 	{
-		$map = [
-			'scalar' => ['Scalar_LNumber', 'Scalar_String'],
-			'complex' => [],
-			'func' => ['Expr_FuncCall'],
-		];
-		foreach ($map as $type => $values) {
+		foreach (self::$map as $type => $values) {
 			if (in_array($class, $values)) {
 				return $type;
 			}
@@ -33,6 +41,10 @@ class Value
 	}
 	public static function _addExpr(Value $v, PhpParser\NodeAbstract $expr)
 	{
+		if ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
+			$v->types = self::getAllType();
+			return $v;
+		}
 		$c = $expr->getType();
 		// echo "addExpr $c\n";
 		$type = self::getType($c);
