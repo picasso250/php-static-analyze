@@ -54,19 +54,21 @@ function check_inner_type($stmts)
             // print_r($cond);exit;
             // print_r($cond);
             // exit;
-            if (is_equal_expr($cond)) {
-                check_Identical($cond, $table);
-            } elseif (is_bool_op_expr($cond)) {
-                foreach ($cond->getIterator() as $expr) {
-                    // echo get_class($cond),"\n";
-                    if ($expr instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
-                        check_Identical($expr, $table);
-                    }
-                }
-            }
+            check_cond($cond, $table);
         }
     }
     // print_r($table);
+}
+function check_cond($cond, $env)
+{
+    if (is_equal_expr($cond)) {
+        check_Identical($cond, $env);
+    } elseif (is_bool_op_expr($cond)) {
+        foreach ($cond->getIterator() as $expr) {
+            // echo get_class($cond),"\n";
+            check_cond($expr, $env);
+        }
+    }
 }
 function is_equal_expr($expr)
 {
