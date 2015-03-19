@@ -56,30 +56,55 @@ function check_inner_type($stmts)
     foreach ($stmts as $stmt) {
         if ($stmt instanceof PhpParser\Node\Stmt\If_) {
             $cond = $stmt->cond;
+            // print_r($cond);exit;
+            // fix: && ||
             if ($cond instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
-                // fix: left and right can be exchange
-                $left = $cond->left;
-                if ($left instanceof PhpParser\Node\Expr\Variable) {
-                    if (isset($table[$left->name])) {
-                        $value = $table[$left->name];
-                        $right = $cond->right;
-                        if ($right instanceof PhpParser\Node\Expr\ConstFetch) {
-                            $type = get_const_type($right);
-                            if (!in_array($type, $value->types)) {
-                                warning(
-                                    "'$$left->name' can only be (%s), but compare to $type in %d-%d",
-                                    implode(',', $value->types),
-                                    $cond->getAttribute('startLine'),
-                                    $cond->getAttribute('endLine')
-                                );
-                            }
-                        }
-                    }
-                }
+                check_Identical($cond);
             }
         }
     }
     // print_r($table);
+}
+function check_Identical(PhpParser\Node\Expr\BinaryOp\Identical $idt)
+{
+    $left = get_possible_type($idt->left, $table);
+    $right = get_possible_type($idt->right, $table);
+    if (!array_intersect($left, $right)) {
+        warning(
+            "compare %s === %s, but type not match (%s) === (%s) in %d-%d",
+            repr($idt->left),
+            repr($idt->right),
+            implode(',', $left),
+            implode(',', $right),
+            $idt->getAttribute('startLine'),
+            $idt->getAttribute('endLine')
+        );
+    }
+}
+function repr($token)
+{
+    if ($token instanceof PhpParser\Node\Expr\Variable) {
+        return "$$token->name";
+    } elseif ($token instanceof PhpParser\Node\Expr\ConstFetch) {
+        return $name = $token->name->parts[0];
+    }
+    throw new Exception("unkown type ".get_class($token), 1);
+}
+function get_possible_type($expr, $env)
+{
+    if ($expr instanceof PhpParser\Node\Expr\Variable) {
+        if (isset($env[$expr->name])) {
+            $value = $env[$expr->name];
+            return $value->types;
+        } else {
+            warning("uninitialized var $expr->name");
+        }
+    } elseif ($expr instanceof PhpParser\Node\Expr\ConstFetch) {
+        $type = [get_const_type($expr)];
+        return $type;
+    }
+    // fix: const and not const, such as true false
+    throw new Exception("unkown type ".get_class($expr), 1);
 }
 function get_const_type($const)
 {
@@ -87,7 +112,7 @@ function get_const_type($const)
     if (strtolower($name) === 'null') {
         return 'NULL';
     }
-    throw new Exception("unkown const type", 1);
+    throw new Exception("unkown const type ".get_class($const), 1);
 }
 function warning()
 {
