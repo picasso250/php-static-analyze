@@ -90,9 +90,8 @@ function check_Identical(PhpParser\Node\Expr\BinaryOp $idt, $env)
     $right = get_possible_type($idt->right, $env);
     if (!array_intersect($left, $right)) {
         warning(
-            "compare %s === %s, but type not match (%s) === (%s) in line %d-%d",
-            repr($idt->left),
-            repr($idt->right),
+            "compare %s, but type not match (%s) === (%s) in line %d-%d",
+            repr($idt),
             implode(', ', $left),
             implode(', ', $right),
             $idt->getAttribute('startLine'),
@@ -100,14 +99,22 @@ function check_Identical(PhpParser\Node\Expr\BinaryOp $idt, $env)
         );
     }
 }
-function repr($token)
+function repr($expr)
 {
-    if ($token instanceof PhpParser\Node\Expr\Variable) {
-        return "$$token->name";
-    } elseif ($token instanceof PhpParser\Node\Expr\ConstFetch) {
-        return $name = $token->name->parts[0];
+    if ($expr instanceof PhpParser\Node\Expr\Variable) {
+        return "$$expr->name";
+    } elseif ($expr instanceof PhpParser\Node\Expr\ConstFetch) {
+        return $name = $expr->name->parts[0];
+    } elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp) {
+        $map = [
+            'PhpParser\Node\Expr\BinaryOp\Equal' => '==',
+            'PhpParser\Node\Expr\BinaryOp\NotEqual' => '!=',
+            'PhpParser\Node\Expr\BinaryOp\Identical' => '===',
+            'PhpParser\Node\Expr\BinaryOp\NotIdentical' => '!==',
+        ];
+        return implode(' ', [repr($expr->left), $map[get_class($expr)], repr($expr->right)]);
     }
-    throw new Exception("unkown type ".get_class($token), 1);
+    throw new Exception("unkown type ".get_class($expr), 1);
 }
 function get_possible_type($expr, $env)
 {
