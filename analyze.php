@@ -59,19 +59,26 @@ function check_inner_type($stmts)
             // print_r($cond);exit;
             // fix: && ||
             if ($cond instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
-                check_Identical($cond);
+                check_Identical($cond, $table);
+            } elseif (is_bool_op_expr($cond)) {
+                check_Identical($cond->left, $table);
+                check_Identical($cond->right, $table);
             }
         }
     }
     // print_r($table);
 }
-function check_Identical(PhpParser\Node\Expr\BinaryOp\Identical $idt)
+function is_bool_op_expr($expr)
 {
-    $left = get_possible_type($idt->left, $table);
-    $right = get_possible_type($idt->right, $table);
+    return in_array(get_class($expr), ['PhpParser\Node\Expr\BinaryOp\BooleanAnd']);
+}
+function check_Identical(PhpParser\Node\Expr\BinaryOp\Identical $idt, $env)
+{
+    $left = get_possible_type($idt->left, $env);
+    $right = get_possible_type($idt->right, $env);
     if (!array_intersect($left, $right)) {
         warning(
-            "compare %s === %s, but type not match (%s) === (%s) in %d-%d",
+            "compare %s === %s, but type not match (%s) === (%s) in line %d-%d",
             repr($idt->left),
             repr($idt->right),
             implode(',', $left),
