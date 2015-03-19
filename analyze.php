@@ -52,11 +52,13 @@ function check_inner_type($stmts)
         if ($stmt instanceof PhpParser\Node\Stmt\If_) {
             $cond = $stmt->cond;
             // print_r($cond);exit;
-            // fix: && ||
-            if ($cond instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
+            // print_r($cond);
+            // exit;
+            if (is_equal_expr($cond)) {
                 check_Identical($cond, $table);
             } elseif (is_bool_op_expr($cond)) {
                 foreach ($cond->getIterator() as $expr) {
+                    // echo get_class($cond),"\n";
                     if ($expr instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
                         check_Identical($expr, $table);
                     }
@@ -66,19 +68,23 @@ function check_inner_type($stmts)
     }
     // print_r($table);
 }
+function is_equal_expr($expr)
+{
+    return in_array(get_class($expr), [
+        'PhpParser\Node\Expr\BinaryOp\Equal',
+        'PhpParser\Node\Expr\BinaryOp\NotEqual',
+        'PhpParser\Node\Expr\BinaryOp\Identical',
+        'PhpParser\Node\Expr\BinaryOp\NotIdentical',
+    ]);
+}
 function is_bool_op_expr($expr)
 {
     return in_array($expr->getType(), [
         'Expr_BinaryOp_BooleanAnd',
-        'Expr_BinaryOp_BooleanAnd',
-        'Expr_BinaryOp_BooleanAnd',
-        'Expr_BinaryOp_BooleanAnd',
-        'Expr_BinaryOp_BooleanAnd',
-        'Expr_BinaryOp_BooleanAnd',
-        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanOr',
     ]);
 }
-function check_Identical(PhpParser\Node\Expr\BinaryOp\Identical $idt, $env)
+function check_Identical(PhpParser\Node\Expr\BinaryOp $idt, $env)
 {
     $left = get_possible_type($idt->left, $env);
     $right = get_possible_type($idt->right, $env);
