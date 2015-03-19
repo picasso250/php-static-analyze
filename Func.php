@@ -23,8 +23,13 @@ class Func
 		$func->stmts = $m->stmts;
 		return $func;
 	}
-	public static function getPossibleTypes()
+	public static function getPossibleTypes(PhpParser\Node\Expr\FuncCall $call)
 	{
+		$buildin = json_decode(file_get_contents(__DIR__.'/func_types.json'), true);
+		$name = $call->name->parts[0];
+		if (isset($buildin[$name])) {
+			return $buildin[$name];
+		}
 		return ['Scalar_String'];
 	}
 	public function getAllReturn()
