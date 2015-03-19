@@ -15,9 +15,9 @@ class Value
 	public static function getType($class)
 	{
 		$map = [
-			'scalar' => ['PhpParser\Node\Scalar\LNumber', 'PhpParser\Node\Scalar\String'],
+			'scalar' => ['Scalar_LNumber', 'Scalar_String'],
 			'complex' => [],
-			'func' => ['PhpParser\Node\Expr\FuncCall'],
+			'func' => ['Expr_FuncCall'],
 		];
 		foreach ($map as $type => $values) {
 			if (in_array($class, $values)) {
@@ -31,9 +31,10 @@ class Value
 		$v = new self();
 		return self::_addExpr($v, $expr);
 	}
-	public static function _addExpr(Value $v, $expr)
+	public static function _addExpr(Value $v, PhpParser\NodeAbstract $expr)
 	{
-		$c = get_class($expr);
+		$c = $expr->getType();
+		// echo "addExpr $c\n";
 		$type = self::getType($c);
 		switch ($type) {
 			case 'scalar':
@@ -51,6 +52,7 @@ class Value
 				break;
 		}
 		$v->types = array_unique($v->types);
+		// print_r($v->types);
 		return $v;
 	}
 	public function addExpr($expr)

@@ -25,7 +25,7 @@ class Func
 	}
 	public static function getPossibleTypes()
 	{
-		return ['PhpParser\Node\Scalar\String'];
+		return ['Scalar_String'];
 	}
 	public function getAllReturn()
 	{

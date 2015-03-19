@@ -34,12 +34,6 @@ function get_all_func(array $stmts)
     return $ret;
 }
 
-function _check_inner_type($stmts)
-{
-    foreach ($stmts as $stmt) {
-        # code...
-    }
-}
 function check_inner_type($stmts)
 {
     foreach ($stmts as $stmt) {
@@ -49,6 +43,7 @@ function check_inner_type($stmts)
                 // echo "addExpr {$stmt->var->name}\n";
                 $table[$stmt->var->name]->addExpr($stmt->expr);
             } else {
+                // echo "createFromExpr {$stmt->var->name}\n";
                 $table[$stmt->var->name] = Value::createFromExpr($stmt->expr);
             }
         }
@@ -61,8 +56,11 @@ function check_inner_type($stmts)
             if ($cond instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
                 check_Identical($cond, $table);
             } elseif (is_bool_op_expr($cond)) {
-                check_Identical($cond->left, $table);
-                check_Identical($cond->right, $table);
+                foreach ($cond->getIterator() as $expr) {
+                    if ($expr instanceof PhpParser\Node\Expr\BinaryOp\Identical) {
+                        check_Identical($expr, $table);
+                    }
+                }
             }
         }
     }
@@ -70,7 +68,15 @@ function check_inner_type($stmts)
 }
 function is_bool_op_expr($expr)
 {
-    return in_array(get_class($expr), ['PhpParser\Node\Expr\BinaryOp\BooleanAnd']);
+    return in_array($expr->getType(), [
+        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanAnd',
+        'Expr_BinaryOp_BooleanAnd',
+    ]);
 }
 function check_Identical(PhpParser\Node\Expr\BinaryOp\Identical $idt, $env)
 {
@@ -81,8 +87,8 @@ function check_Identical(PhpParser\Node\Expr\BinaryOp\Identical $idt, $env)
             "compare %s === %s, but type not match (%s) === (%s) in line %d-%d",
             repr($idt->left),
             repr($idt->right),
-            implode(',', $left),
-            implode(',', $right),
+            implode(', ', $left),
+            implode(', ', $right),
             $idt->getAttribute('startLine'),
             $idt->getAttribute('endLine')
         );
@@ -102,6 +108,8 @@ function get_possible_type($expr, $env)
     if ($expr instanceof PhpParser\Node\Expr\Variable) {
         if (isset($env[$expr->name])) {
             $value = $env[$expr->name];
+            // echo "$$expr->name: ";
+            // print_r($value);
             return $value->types;
         } else {
             warning("uninitialized var $expr->name");
@@ -125,7 +133,6 @@ function warning()
 {
     $str = call_user_func_array('sprintf', func_get_args());
     echo "Warning: $str\n";
-    exit(1);
 }
 function unreachable($stmts)
 {
