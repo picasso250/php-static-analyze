@@ -14,6 +14,13 @@ class Value
 	}
 	public static $map = [
 		'Scalar_MagicConst_Dir' => 'Scalar_String',
+		'Scalar_MagicConst_File' => 'Scalar_String',
+		'Scalar_MagicConst_Line' => 'Scalar_String',
+		'Scalar_MagicConst_Function' => 'Scalar_String',
+		'Scalar_MagicConst_Class' => 'Scalar_String',
+		'Scalar_MagicConst_Namespace' => 'Scalar_String',
+		'Scalar_MagicConst_Trait' => 'Scalar_String',
+		'Scalar_MagicConst_Method' => 'Scalar_String',
 	];
 	public static function getAllType()
 	{
