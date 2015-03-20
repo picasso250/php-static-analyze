@@ -2,5 +2,6 @@
 return [
 // todo add all buildin function
 	"trim" => ["Scalar_String"],
-	'intval' => ['Scalar_LNumber']
+	'intval' => ['Scalar_LNumber'],
+	'fopen' => ['Resourse'],
 ];

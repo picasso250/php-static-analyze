@@ -25,7 +25,7 @@ class Func
 	}
 	public static function getPossibleTypes(PhpParser\Node\Expr\FuncCall $call)
 	{
-		$buildin = require (__DIR__.'/func_types.json');
+		$buildin = require (__DIR__.'/func_types.php');
 		$name = $call->name->parts[0];
 		if (isset($buildin[$name])) {
 			return $buildin[$name];

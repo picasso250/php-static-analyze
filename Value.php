@@ -13,9 +13,7 @@ class Value
 		}
 	}
 	public static $map = [
-		'scalar' => ['Scalar_LNumber', 'Scalar_String'],
-		'complex' => ['Expr_Array'],
-		'func' => ['Expr_FuncCall'],
+		'Scalar_MagicConst_Dir' => 'Scalar_String',
 	];
 	public static function getAllType()
 	{
@@ -39,30 +37,26 @@ class Value
 		$v = new self();
 		return self::_addExpr($v, $expr);
 	}
+	public static function isDirect($type)
+	{
+		return in_array($type, ['Scalar_LNumber', 'Scalar_String', 'Expr_Array']);
+	}
 	public static function _addExpr(Value $v, PhpParser\NodeAbstract $expr)
 	{
+		$type = $expr->getType();
 		if ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
 			$v->types = self::getAllType();
-			return $v;
 		} elseif ($expr instanceof PhpParser\Node\Expr\New_) {
-			$v->types[] = $expr->class->name->parts[0];
-		}
-		$t = $expr->getType();
-		$type = self::getType($t);
-		switch ($type) {
-			case 'scalar':
-				$v->types[] = $t;
-				break;
-			case 'complex':
-				$v->types[] = $t;
-				break;
-			case 'func':
-				$v->types = array_merge($v->types, Func::getPossibleTypes($expr));
-				break;
-			
-			default:
-				throw new Exception("unkown '$type' of '$t'", 1);
-				break;
+			// fix: dynamic class
+			$v->types[] = $expr->class->parts[0];
+		} elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
+			$v->types = array_merge($v->types, Func::getPossibleTypes($expr));
+		} elseif (self::isDirect($type)) {
+			$v->types[] = $type;
+		} elseif (isset(self::$map[$type])) {
+			$v->types[] = self::$map[$type];
+		} else {
+			throw new Exception("unkown '$type' of ".get_class($expr), 1);
 		}
 		$v->types = array_unique($v->types);
 		// print_r($v->types);
