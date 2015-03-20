@@ -44,22 +44,24 @@ class Value
 		if ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
 			$v->types = self::getAllType();
 			return $v;
+		} elseif ($expr instanceof PhpParser\Node\Expr\New_) {
+			$v->types[] = $expr->class->name->parts[0];
 		}
 		$t = $expr->getType();
 		$type = self::getType($t);
 		switch ($type) {
 			case 'scalar':
-				$v->types[] = $c;
+				$v->types[] = $t;
 				break;
 			case 'complex':
-				$v->types[] = $c;
+				$v->types[] = $t;
 				break;
 			case 'func':
 				$v->types = array_merge($v->types, Func::getPossibleTypes($expr));
 				break;
 			
 			default:
-				throw new Exception("unkown '$type' of '$c'", 1);
+				throw new Exception("unkown '$type' of '$t'", 1);
 				break;
 		}
 		$v->types = array_unique($v->types);
