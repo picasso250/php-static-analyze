@@ -6,10 +6,9 @@ require dirname(__DIR__).'/logic.php';
 
 use Testify\Testify;
 
-$tf = new Testify("Danmu Test Suite");
+$tf = new Testify("PHPTypeChecker Test Suite");
 
-$tf->test("Testing the Arithmetic Operators", function($tf) {
-    
+$tf->beforeEach(function($tf){
     $file = basename(__FILE__, '.php').'.code.php';
 
     $code = file_get_contents($file);
@@ -18,23 +17,18 @@ $tf->test("Testing the Arithmetic Operators", function($tf) {
     $stmts = $parser->parse($code);
     foreach ($stmts as $stmt) {
         if ($stmt instanceof PhpParser\Node\Stmt\Function_) {
-            $env = build_env($stmt->stmts);
+            $tf->data->env = build_env($stmt->stmts);
         }
     }
-    print_r($env);
-    $tf->assertEquals($env['a']->types, ['Scalar_DNumber']);
-    $tf->assertEquals($env['b']->types, ['Scalar_String']);
-    $tf->assertEquals($env['c']->types, ['Expr_Array']);
-    $tf->assertEquals($env['d']->types, ['stdClass']);
-    $tf->assertEquals($env['e']->types, ['Resourse']);
-    $tf->assertEquals($env['f']->types, ['Scalar_String']);
-    $tf->assertEquals($env['g']->types, ['Scalar_String']);
-    $tf->assertEquals($env['h']->types, ['Scalar_String']);
-    $tf->assertEquals($env['i']->types, ['Scalar_String']);
-    $tf->assertEquals($env['j']->types, ['Scalar_String']);
-    $tf->assertEquals($env['k']->types, ['Scalar_String']);
-    $tf->assertEquals($env['l']->types, ['Scalar_String']);
-    $tf->assertEquals($env['m']->types, ['Scalar_String']);
+});
+
+$tf->test("Testing the Arithmetic Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['Negation']->type->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Addition']->type->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Subtraction']->type->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Multiplication']->type->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Division']->type->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Modulus']->type->types, ['Scalar_DNumber']); // fix Modulus always return int
 });
 
 $tf();
