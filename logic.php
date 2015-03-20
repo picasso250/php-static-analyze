@@ -11,6 +11,8 @@ function build_env($stmts)
             $env->addType($stmt->var->name, 'Scalar_DNumber');
         } elseif (Operator::isIncrOrDecr(get_class($stmt))) {
             $env->addType($stmt->var->name, 'Scalar_DNumber');
+        } elseif ($stmt instanceof PhpParser\Node\Expr\AssignOp\Concat) {
+            $env->addType($stmt->var->name, 'Scalar_String');
         } else {
             throw new Exception("unkown type ".get_class($stmt), 1);
         }

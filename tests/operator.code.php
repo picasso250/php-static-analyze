@@ -43,8 +43,16 @@ function foo()
     $Pre_decrement_Assign = --$a    ;
     $Post_decrement_Assign = $a--    ;
 
-    $b = '2' . 3;
+    // $AndText = $a and $b   ;
+    // $OrText = $a or $b    ;
+    // $Xor = $a xor $b   ;
+    $LogicalNot = ! $a    ;
+    $LogicalAnd = $a && $b    ;
+    $LogicalOr = $a || $b    ;
+
+    $concatenation = '2' . 3;
+    $concatenationAssign .= '2' . 3;
+
     $c = [3] + [4];
     $d = (new stdClass())->x;
-    $e = 3 && 4;
 }

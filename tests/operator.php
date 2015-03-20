@@ -74,4 +74,18 @@ $tf->test("Testing the Incrementing/Decrementing Operators when Assgin", functio
     $tf->assertEquals($tf->data->env['Post_decrement_Assign']->types, ['Scalar_DNumber']);
 });
 
+$tf->test("Testing the Logical Operators", function($tf) {
+    // todo
+    // $tf->assertEquals($tf->data->env['AndText']->types, ['Boolean']);
+    // $tf->assertEquals($tf->data->env['OrText']->types, ['Boolean']);
+    // $tf->assertEquals($tf->data->env['Xor']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['LogicalNot']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['LogicalAnd']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['LogicalOr']->types, ['Boolean']);
+});
+$tf->test("Testing the String Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['concatenation']->types, ['Scalar_String']);
+    $tf->assertEquals($tf->data->env['concatenationAssign']->types, ['Scalar_String']);
+});
+
 $tf();

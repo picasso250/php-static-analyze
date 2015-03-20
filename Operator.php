@@ -11,6 +11,14 @@ class Operator
             'PhpParser\Node\Expr\PostDec',
         ]);
     }
+    public static function isLogical($class)
+    {
+        return in_array($class, [
+            'PhpParser\Node\Expr\BooleanNot',
+            'PhpParser\Node\Expr\BinaryOp\BooleanOr',
+            'PhpParser\Node\Expr\BinaryOp\BooleanAnd',
+        ]);
+    }
     public static function isComparison($class)
     {
         return in_array($class, [
