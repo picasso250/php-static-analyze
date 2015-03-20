@@ -2,6 +2,19 @@
 
 class Operator
 {
+    public static function isComparison($class)
+    {
+        return in_array($class, [
+            'PhpParser\Node\Expr\BinaryOp\Equal',
+            'PhpParser\Node\Expr\BinaryOp\Identical',
+            'PhpParser\Node\Expr\BinaryOp\NotEqual',
+            'PhpParser\Node\Expr\BinaryOp\NotIdentical',
+            'PhpParser\Node\Expr\BinaryOp\Smaller',
+            'PhpParser\Node\Expr\BinaryOp\Greater',
+            'PhpParser\Node\Expr\BinaryOp\SmallerOrEqual',
+            'PhpParser\Node\Expr\BinaryOp\GreaterOrEqual',
+        ]);
+    }
     public static function isBitwise($class)
     {
         return in_array($class, [

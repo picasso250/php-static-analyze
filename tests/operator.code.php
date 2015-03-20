@@ -22,7 +22,17 @@ function foo()
     $Not = ~ $a   ;
     $Shift_left = $a << $b;
     $Shift_right = $a >> $b;
-    
+
+    $Equal = $a == $b;
+    $Identical = $a === $b;
+    $Not_equal = $a != $b;
+    $Not_equal = $a <> $b;
+    $Not_identical = $a !== $b;
+    $Less_than = $a < $b;
+    $Greater_than  = $a > $b;
+    $Less_than_or_equal_to = $a <= $b;
+    $Greater_than_or_equal_to  = $a >= $b;
+
     $b = '2' . 3;
     $c = [3] + [4];
     $d = (new stdClass())->x;

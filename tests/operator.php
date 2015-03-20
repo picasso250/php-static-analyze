@@ -44,8 +44,20 @@ $tf->test("Testing the Bitwise Operators", function($tf) {
     $tf->assertEquals($tf->data->env['Or']->types, ['Scalar_LNumber']);
     $tf->assertEquals($tf->data->env['Xor']->types, ['Scalar_LNumber']);
     $tf->assertEquals($tf->data->env['Not']->types, ['Scalar_LNumber']);
-    $tf->assertEquals($tf->data->env['Shift_left']->types, ['Scalar_LNumber']); // fix Modulus always return int
-    $tf->assertEquals($tf->data->env['Shift_right']->types, ['Scalar_LNumber']); // fix Modulus always return int
+    $tf->assertEquals($tf->data->env['Shift_left']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Shift_right']->types, ['Scalar_LNumber']);
+});
+
+$tf->test("Testing the Comparison Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['Equal']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Identical']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Not_equal']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Not_equal']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Not_identical']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Less_than']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Greater_than']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Less_than_or_equal_to']->types, ['Boolean']);
+    $tf->assertEquals($tf->data->env['Greater_than_or_equal_to']->types, ['Boolean']);
 });
 
 $tf();

@@ -59,6 +59,7 @@ class Type
     }
     public static function _addExpr(Type $t, PhpParser\NodeAbstract $expr)
     {
+        $class = get_class($expr);
         $type = $expr->getType();
         if ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
             // todo
@@ -69,12 +70,14 @@ class Type
         } elseif ($expr instanceof PhpParser\Node\Expr\New_) {
             // fix: dynamic class
             $t->addType($expr->class->parts[0]);
-        } elseif (Operator::isArithmetic(get_class($expr))) {
+        } elseif (Operator::isArithmetic($class)) {
             // fix: array +
             // fix: int or float
             $t->addType('Scalar_DNumber');
-        } elseif (Operator::isBitwise(get_class($expr))) {
+        } elseif (Operator::isBitwise($class)) {
             $t->addType('Scalar_LNumber');
+        } elseif (Operator::isComparison($class)) {
+            $t->addType('Boolean');
         } elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\BooleanAnd) {
             // todo bool
             $t->addType('Boolean');
@@ -87,7 +90,7 @@ class Type
         } elseif (isset(self::$map[$type])) {
             $t->addType(self::$map[$type]);
         } else {
-            throw new Exception("unkown '$type' of ".get_class($expr), 1);
+            throw new Exception("unkown '$type' of ".$class, 1);
         }
         return $t;
     }
