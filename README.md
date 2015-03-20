@@ -11,6 +11,6 @@
 ```php
 $a = trim($b);     // trim() always return string
 if ($a === null) { // error, because $a's type is string, but null' type is null
-    // more code
+    // ...
 }
 ```
