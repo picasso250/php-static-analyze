@@ -73,6 +73,8 @@ class Type
             // fix: array +
             // fix: int or float
             $t->addType('Scalar_DNumber');
+        } elseif (Operator::isBitwise(get_class($expr))) {
+            $t->addType('Scalar_LNumber');
         } elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\BooleanAnd) {
             // todo bool
             $t->addType('Boolean');

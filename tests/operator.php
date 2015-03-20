@@ -39,4 +39,13 @@ $tf->test("Testing the Arithmetic Assign Operators", function($tf) {
     $tf->assertEquals($tf->data->env['ModulusAssign']->types, ['Scalar_DNumber']); // fix Modulus always return int
 });
 
+$tf->test("Testing the Bitwise Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['And']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Or']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Xor']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Not']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Shift_left']->types, ['Scalar_LNumber']); // fix Modulus always return int
+    $tf->assertEquals($tf->data->env['Shift_right']->types, ['Scalar_LNumber']); // fix Modulus always return int
+});
+
 $tf();

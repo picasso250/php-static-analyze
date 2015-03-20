@@ -2,6 +2,17 @@
 
 class Operator
 {
+    public static function isBitwise($class)
+    {
+        return in_array($class, [
+            'PhpParser\Node\Expr\BinaryOp\BitwiseAnd',
+            'PhpParser\Node\Expr\BinaryOp\BitwiseOr',
+            'PhpParser\Node\Expr\BinaryOp\BitwiseXor',
+            'PhpParser\Node\Expr\BitwiseNot',
+            'PhpParser\Node\Expr\BinaryOp\ShiftLeft',
+            'PhpParser\Node\Expr\BinaryOp\ShiftRight',
+        ]);
+    }
     public static function isArithmeticAssign($class)
     {
         return in_array($class, [
