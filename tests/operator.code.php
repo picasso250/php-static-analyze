@@ -38,6 +38,11 @@ function foo()
     --$Pre_decrement    ;
     $Post_decrement--    ;
 
+    $Pre_increment_Assign = ++$a    ;
+    $Post_increment_Assign = $a++    ;
+    $Pre_decrement_Assign = --$a    ;
+    $Post_decrement_Assign = $a--    ;
+
     $b = '2' . 3;
     $c = [3] + [4];
     $d = (new stdClass())->x;

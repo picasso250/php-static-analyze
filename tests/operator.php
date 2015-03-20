@@ -61,10 +61,17 @@ $tf->test("Testing the Comparison Operators", function($tf) {
 });
 
 $tf->test("Testing the Incrementing/Decrementing Operators", function($tf) {
-    $tf->assertEquals($tf->data->env['Pre_increment']->types, ['Scalar_LNumber']);
-    $tf->assertEquals($tf->data->env['Post_increment']->types, ['Scalar_LNumber']);
-    $tf->assertEquals($tf->data->env['Pre_decrement']->types, ['Scalar_LNumber']);
-    $tf->assertEquals($tf->data->env['Post_decrement']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Pre_increment']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Post_increment']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Pre_decrement']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Post_decrement']->types, ['Scalar_DNumber']);
+});
+
+$tf->test("Testing the Incrementing/Decrementing Operators when Assgin", function($tf) {
+    $tf->assertEquals($tf->data->env['Pre_increment_Assign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Post_increment_Assign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Pre_decrement_Assign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Post_decrement_Assign']->types, ['Scalar_DNumber']);
 });
 
 $tf();

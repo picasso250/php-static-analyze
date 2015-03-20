@@ -78,6 +78,8 @@ class Type
             $t->addType('Scalar_LNumber');
         } elseif (Operator::isComparison($class)) {
             $t->addType('Boolean');
+        } elseif (Operator::isIncrOrDecr($class)) {
+            $t->addType('Scalar_DNumber');
         } elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\BooleanAnd) {
             // todo bool
             $t->addType('Boolean');
