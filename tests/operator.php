@@ -23,12 +23,20 @@ $tf->beforeEach(function($tf){
 });
 
 $tf->test("Testing the Arithmetic Operators", function($tf) {
-    $tf->assertEquals($tf->data->env['Negation']->type->types, ['Scalar_DNumber']);
-    $tf->assertEquals($tf->data->env['Addition']->type->types, ['Scalar_DNumber']);
-    $tf->assertEquals($tf->data->env['Subtraction']->type->types, ['Scalar_DNumber']);
-    $tf->assertEquals($tf->data->env['Multiplication']->type->types, ['Scalar_DNumber']);
-    $tf->assertEquals($tf->data->env['Division']->type->types, ['Scalar_DNumber']);
-    $tf->assertEquals($tf->data->env['Modulus']->type->types, ['Scalar_DNumber']); // fix Modulus always return int
+    $tf->assertEquals($tf->data->env['Negation']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Addition']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Subtraction']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Multiplication']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Division']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['Modulus']->types, ['Scalar_DNumber']); // fix Modulus always return int
+});
+
+$tf->test("Testing the Arithmetic Assign Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['AdditionAssign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['SubtractionAssign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['MultiplicationAssign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['DivisionAssign']->types, ['Scalar_DNumber']);
+    $tf->assertEquals($tf->data->env['ModulusAssign']->types, ['Scalar_DNumber']); // fix Modulus always return int
 });
 
 $tf();
