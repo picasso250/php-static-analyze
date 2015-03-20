@@ -37,7 +37,7 @@ function get_all_func(array $stmts)
     return $ret;
 }
 
-function check_inner_type($stmts)
+function build_env($stmts)
 {
     $table = [];
     foreach ($stmts as $stmt) {
@@ -53,14 +53,18 @@ function check_inner_type($stmts)
             }
         }
     }
+    return $table;
+}
+function check_inner_type($stmts)
+{
+    $env = build_env($stmts);
     foreach ($stmts as $stmt) {
         if ($stmt instanceof PhpParser\Node\Stmt\If_) {
             $cond = $stmt->cond;
             // print_r($cond);exit;
-            check_cond($cond, $table);
+            check_cond($cond, $env);
         }
     }
-    // print_r($table);
 }
 function check_cond($cond, $env)
 {
