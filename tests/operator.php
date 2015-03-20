@@ -60,4 +60,11 @@ $tf->test("Testing the Comparison Operators", function($tf) {
     $tf->assertEquals($tf->data->env['Greater_than_or_equal_to']->types, ['Boolean']);
 });
 
+$tf->test("Testing the Incrementing/Decrementing Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['Pre_increment']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Post_increment']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Pre_decrement']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($tf->data->env['Post_decrement']->types, ['Scalar_LNumber']);
+});
+
 $tf();

@@ -2,6 +2,15 @@
 
 class Operator
 {
+    public static function isIncrOrDecr($class)
+    {
+        return in_array($class, [
+            'PhpParser\Node\Expr\PreInc',
+            'PhpParser\Node\Expr\PostInc',
+            'PhpParser\Node\Expr\PreDec',
+            'PhpParser\Node\Expr\PostDec',
+        ]);
+    }
     public static function isComparison($class)
     {
         return in_array($class, [

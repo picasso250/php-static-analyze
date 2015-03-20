@@ -33,6 +33,11 @@ function foo()
     $Less_than_or_equal_to = $a <= $b;
     $Greater_than_or_equal_to  = $a >= $b;
 
+    ++$Pre_increment    ;
+    $Post_increment++    ;
+    --$Pre_decrement    ;
+    $Post_decrement--    ;
+
     $b = '2' . 3;
     $c = [3] + [4];
     $d = (new stdClass())->x;

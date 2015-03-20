@@ -9,6 +9,8 @@ function build_env($stmts)
             $env->addExpr($stmt->var->name, $stmt->expr);
         } elseif (Operator::isArithmeticAssign(get_class($stmt))) {
             $env->addType($stmt->var->name, 'Scalar_DNumber');
+        } elseif (Operator::isIncrOrDecr(get_class($stmt))) {
+            $env->addType($stmt->var->name, 'Scalar_LNumber');
         } else {
             throw new Exception("unkown type ".get_class($stmt), 1);
         }
