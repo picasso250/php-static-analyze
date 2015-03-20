@@ -2,15 +2,13 @@
 
 class Value
 {
-	public $types = [];
+	public $type;
 	// public $isAny = true;
 	// public $values = [];
 
-	public function __construct($type = null)
+	public function __construct()
 	{
-		if ($type) {
-			$this->types[] = $type;
-		}
+		$this->type = Type::createUnknown();
 	}
 	public static $map = [
 		'Scalar_MagicConst_Dir' => 'Scalar_String',
@@ -22,23 +20,7 @@ class Value
 		'Scalar_MagicConst_Trait' => 'Scalar_String',
 		'Scalar_MagicConst_Method' => 'Scalar_String',
 	];
-	public static function getAllType()
-	{
-		$ret = [];
-		foreach (self::$map as $types) {
-			$ret = array_merge($ret, $types);
-		}
-		return $ret;
-	}
-	public static function getType($class)
-	{
-		foreach (self::$map as $type => $values) {
-			if (in_array($class, $values)) {
-				return $type;
-			}
-		}
-		throw new Exception("no type for '$class'", 1);
-	}
+
 	public static function createFromExpr($expr)
 	{
 		$v = new self();
@@ -55,30 +37,28 @@ class Value
 		$type = $expr->getType();
 		if ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
 			// todo
-			$v->types = self::getAllType();
+			$v->type = Type::createUnknown();
 		} elseif ($expr instanceof PhpParser\Node\Expr\PropertyFetch) {
 			// todo
-			$v->types = self::getAllType();
+			$v->type = Type::createUnknown();
 		} elseif ($expr instanceof PhpParser\Node\Expr\New_) {
 			// fix: dynamic class
-			$v->types[] = $expr->class->parts[0];
+			$v->type->addType($expr->class->parts[0]);
 		} elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\Plus) {
 			// fix: array +
 			// fix: int or float
-			$v->types[] = 'Scalar_DNumber';
+			$v->type->addType('Scalar_DNumber');
 		} elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\Concat) {
-			$v->types[] = 'Scalar_String';
+			$v->type->addType('Scalar_String');
 		} elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
-			$v->types = array_merge($v->types, Func::getPossibleTypes($expr));
+			$v->type->extend(Func::getPossibleTypes($expr));
 		} elseif (self::isDirect($type)) {
-			$v->types[] = $type;
+			$v->type->addType($type);
 		} elseif (isset(self::$map[$type])) {
-			$v->types[] = self::$map[$type];
+			$v->type->addType(self::$map[$type]);
 		} else {
 			throw new Exception("unkown '$type' of ".get_class($expr), 1);
 		}
-		$v->types = array_unique($v->types);
-		// print_r($v->types);
 		return $v;
 	}
 	public function addExpr($expr)
