@@ -45,9 +45,8 @@ class Value
 			$v->types = self::getAllType();
 			return $v;
 		}
-		$c = $expr->getType();
-		// echo "addExpr $c\n";
-		$type = self::getType($c);
+		$t = $expr->getType();
+		$type = self::getType($t);
 		switch ($type) {
 			case 'scalar':
 				$v->types[] = $c;
