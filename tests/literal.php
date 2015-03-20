@@ -21,19 +21,19 @@ $tf->test("Testing the literal", function($tf) {
             $env = build_env($stmt->stmts);
         }
     }
-    $tf->assertEquals($env['a']->type->types, ['Scalar_LNumber']);
-    $tf->assertEquals($env['b']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['c']->type->types, ['Expr_Array']);
-    $tf->assertEquals($env['d']->type->types, ['stdClass']);
-    $tf->assertEquals($env['e']->type->types, ['Resourse']);
-    $tf->assertEquals($env['f']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['g']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['h']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['i']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['j']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['k']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['l']->type->types, ['Scalar_String']);
-    $tf->assertEquals($env['m']->type->types, ['Scalar_String']);
+    $tf->assertEquals($env['a']->types, ['Scalar_LNumber']);
+    $tf->assertEquals($env['b']->types, ['Scalar_String']);
+    $tf->assertEquals($env['c']->types, ['Expr_Array']);
+    $tf->assertEquals($env['d']->types, ['stdClass']);
+    $tf->assertEquals($env['e']->types, ['Resourse']);
+    $tf->assertEquals($env['f']->types, ['Scalar_String']);
+    $tf->assertEquals($env['g']->types, ['Scalar_String']);
+    $tf->assertEquals($env['h']->types, ['Scalar_String']);
+    $tf->assertEquals($env['i']->types, ['Scalar_String']);
+    $tf->assertEquals($env['j']->types, ['Scalar_String']);
+    $tf->assertEquals($env['k']->types, ['Scalar_String']);
+    $tf->assertEquals($env['l']->types, ['Scalar_String']);
+    $tf->assertEquals($env['m']->types, ['Scalar_String']);
 });
 
 $tf();
