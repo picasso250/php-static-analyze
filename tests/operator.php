@@ -83,9 +83,14 @@ $tf->test("Testing the Logical Operators", function($tf) {
     $tf->assertEquals($tf->data->env['LogicalAnd']->types, ['Boolean']);
     $tf->assertEquals($tf->data->env['LogicalOr']->types, ['Boolean']);
 });
+
 $tf->test("Testing the String Operators", function($tf) {
     $tf->assertEquals($tf->data->env['concatenation']->types, ['Scalar_String']);
     $tf->assertEquals($tf->data->env['concatenationAssign']->types, ['Scalar_String']);
+});
+
+$tf->test("Testing the Type Operators", function($tf) {
+    $tf->assertEquals($tf->data->env['instanceof']->types, ['Boolean']);
 });
 
 $tf();

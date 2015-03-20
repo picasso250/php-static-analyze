@@ -53,6 +53,8 @@ function foo()
     $concatenation = '2' . 3;
     $concatenationAssign .= '2' . 3;
 
-    $c = [3] + [4];
+    $instanceof = $a instanceof MyClass;
+
+    // $c = [3] + [4]; // todo
     $d = (new stdClass())->x;
 }

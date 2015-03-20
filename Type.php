@@ -80,11 +80,10 @@ class Type
             $t->addType('Boolean');
         } elseif (Operator::isLogical($class)) {
             $t->addType('Boolean');
+        } elseif ($expr instanceof PhpParser\Node\Expr\Instanceof_) {
+            $t->addType('Boolean');
         } elseif (Operator::isIncrOrDecr($class)) {
             $t->addType('Scalar_DNumber');
-        } elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\BooleanAnd) {
-            // todo bool
-            $t->addType('Boolean');
         } elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\Concat) {
             $t->addType('Scalar_String');
         } elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
