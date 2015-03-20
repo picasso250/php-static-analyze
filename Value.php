@@ -46,16 +46,28 @@ class Value
 	}
 	public static function isDirect($type)
 	{
-		return in_array($type, ['Scalar_LNumber', 'Scalar_String', 'Expr_Array']);
+		return in_array($type, [
+			'Scalar_LNumber', 'Scalar_LNumber', 'Scalar_String',
+			'Expr_Array']);
 	}
 	public static function _addExpr(Value $v, PhpParser\NodeAbstract $expr)
 	{
 		$type = $expr->getType();
 		if ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
+			// todo
+			$v->types = self::getAllType();
+		} elseif ($expr instanceof PhpParser\Node\Expr\PropertyFetch) {
+			// todo
 			$v->types = self::getAllType();
 		} elseif ($expr instanceof PhpParser\Node\Expr\New_) {
 			// fix: dynamic class
 			$v->types[] = $expr->class->parts[0];
+		} elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\Plus) {
+			// fix: array +
+			// fix: int or float
+			$v->types[] = 'Scalar_DNumber';
+		} elseif ($expr instanceof PhpParser\Node\Expr\BinaryOp\Concat) {
+			$v->types[] = 'Scalar_String';
 		} elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
 			$v->types = array_merge($v->types, Func::getPossibleTypes($expr));
 		} elseif (self::isDirect($type)) {

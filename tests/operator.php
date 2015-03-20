@@ -8,7 +8,7 @@ use Testify\Testify;
 
 $tf = new Testify("Danmu Test Suite");
 
-$tf->test("Testing the literal", function($tf) {
+$tf->test("Testing the Arithmetic Operators", function($tf) {
     
     $file = basename(__FILE__, '.php').'.code.php';
 
@@ -21,7 +21,8 @@ $tf->test("Testing the literal", function($tf) {
             $env = build_env($stmt->stmts);
         }
     }
-    $tf->assertEquals($env['a']->types, ['Scalar_LNumber']);
+    print_r($env);
+    $tf->assertEquals($env['a']->types, ['Scalar_DNumber']);
     $tf->assertEquals($env['b']->types, ['Scalar_String']);
     $tf->assertEquals($env['c']->types, ['Expr_Array']);
     $tf->assertEquals($env['d']->types, ['stdClass']);
