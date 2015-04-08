@@ -22,10 +22,13 @@ function two_return()
 function if_return() {
     if ($a) {
         return true;
+    } elseif ($b) {
+        return false;
     } else {
         return false;
     }
 }
+
 function while_return() {
     while ($a) {
         return true;

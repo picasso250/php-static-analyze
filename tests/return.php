@@ -35,6 +35,12 @@ $tf->test("Testing the return", function($tf) {
 
     $two_return = Func::createFromFunction($tf->data->two_return);
     $tf->assertEquals($two_return->getReturnType()->types, ['Boolean']);
+
+    $if_return = Func::createFromFunction($tf->data->if_return);
+    $tf->assertEquals($if_return->getReturnType()->types, ['NULL', 'Boolean']); // fix no null
+    
+    $while_return = Func::createFromFunction($tf->data->while_return);
+    $tf->assertEquals($while_return->getReturnType()->types, ['NULL', 'Boolean']); // fix no null
 });
 
 $tf();
