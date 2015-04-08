@@ -88,6 +88,14 @@ class Type
             $t->addType('Scalar_String');
         } elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
             $t->extend(Func::getPossibleTypes($expr));
+        } elseif ($expr instanceof PhpParser\Node\Expr\ConstFetch) {
+            $parts = $expr->name->parts;
+            if (count($parts) === 0 && $parts[0] === null) {
+                $t->addType('NULL');
+            } else {
+                error_log("unkown $parts[0]");
+                $t->isAny = true;
+            }
         } elseif (self::isDirect($type)) {
             $t->addType($type);
         } elseif (isset(self::$map[$type])) {

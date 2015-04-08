@@ -32,14 +32,24 @@ class Func
 		}
 		throw new Exception("no function $name", 1);
 	}
-	public function getAllReturn()
-	{
-		return array_filter($this->stmts, function($s) {
-				return $s instanceof Return_;
-			});
-	}
 	public function getReturnType()
 	{
+		$type = new Type;
+		$stmts = [];
+		// 主流程有无 return 语句？
+		foreach ($this->stmts as $stmt) {
+			$stmts[] = $stmt;
+			if ($stmt instanceof Return_) {
+				print_r($stmt);exit;
+				$type->addExpr($stmt->expr);
+				break; // 主流程中的第一个return语句，忽略其他的。
+			}
+		}
+		foreach ($stmts as $stmt) {
+			if ($stmt instanceof PhpParser\Node\Stmt\If_) {
+				# code...
+			}
+		}
 		return 
 		$a = 1;
 		return 1;
