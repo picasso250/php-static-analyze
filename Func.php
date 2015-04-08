@@ -40,8 +40,12 @@ class Func
 		foreach ($this->stmts as $stmt) {
 			$stmts[] = $stmt;
 			if ($stmt instanceof Return_) {
-				print_r($stmt);exit;
-				$type->addExpr($stmt->expr);
+				// print_r($stmt);
+				if ($stmt->expr) {
+					$type->addExpr($stmt->expr);
+				} else {
+					$type->addType('NULL');
+				}
 				break; // 主流程中的第一个return语句，忽略其他的。
 			}
 		}
@@ -50,9 +54,7 @@ class Func
 				# code...
 			}
 		}
-		return 
-		$a = 1;
-		return 1;
+		return $type;
 	}
 
 }

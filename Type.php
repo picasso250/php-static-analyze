@@ -90,7 +90,7 @@ class Type
             $t->extend(Func::getPossibleTypes($expr));
         } elseif ($expr instanceof PhpParser\Node\Expr\ConstFetch) {
             $parts = $expr->name->parts;
-            if (count($parts) === 0 && $parts[0] === null) {
+            if (count($parts) === 1 && $parts[0] === 'null') {
                 $t->addType('NULL');
             } else {
                 error_log("unkown $parts[0]");
