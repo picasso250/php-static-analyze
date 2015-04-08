@@ -26,9 +26,15 @@ $tf->beforeEach(function($tf){
 $tf->test("Testing the return", function($tf) {
     $return_null = Func::createFromFunction($tf->data->return_null);
     $tf->assertEquals($return_null->getReturnType()->types, ['NULL']);
-    
+
     $only_return = Func::createFromFunction($tf->data->only_return);
     $tf->assertEquals($only_return->getReturnType()->types, ['NULL']);
+
+    $no_return = Func::createFromFunction($tf->data->no_return);
+    $tf->assertEquals($no_return->getReturnType()->types, ['NULL']);
+
+    $two_return = Func::createFromFunction($tf->data->two_return);
+    $tf->assertEquals($two_return->getReturnType()->types, ['Boolean']);
 });
 
 $tf();

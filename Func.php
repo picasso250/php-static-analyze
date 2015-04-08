@@ -36,11 +36,9 @@ class Func
 	{
 		$type = new Type;
 		$stmts = [];
-		// 主流程有无 return 语句？
 		foreach ($this->stmts as $stmt) {
 			$stmts[] = $stmt;
 			if ($stmt instanceof Return_) {
-				// print_r($stmt);
 				if ($stmt->expr) {
 					$type->addExpr($stmt->expr);
 				} else {
@@ -49,9 +47,12 @@ class Func
 				break; // 主流程中的第一个return语句，忽略其他的。
 			}
 		}
+		if (! ($stmt instanceof Return_)) {
+			$type->addType('NULL'); // 如果主流程没有 return 语句
+		}
 		foreach ($stmts as $stmt) {
 			if ($stmt instanceof PhpParser\Node\Stmt\If_) {
-				# code...
+				print_r($stmt);
 			}
 		}
 		return $type;
