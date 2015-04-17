@@ -75,7 +75,9 @@ function _consume_func($stmts)
         } elseif (is_prefix($stmt, 'PhpParser\\Node\\Expr\\')) {
             expr_consume($stmt);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Return_ || $stmt instanceof PhpParser\Node\Expr\Assign || $stmt instanceof PhpParser\Node\Stmt\Throw_) {
-            expr_consume($stmt->expr);
+            if ($stmt->expr) {
+                expr_consume($stmt->expr);
+            }
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Switch_) {
             expr_consume($stmt->cond);
             foreach ($stmt->cases as $case) {
@@ -108,6 +110,8 @@ function expr_consume($expr)
         expr_consume($expr->expr);
     } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable || $expr instanceof PhpParser\Node\Expr\New_) {
         // do nothing
+    } elseif ($expr instanceof PhpParser\Node\Expr\PropertyFetch) {
+        expr_consume($expr->var);
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
         expr_consume($expr->var);
         expr_consume($expr->dim);
@@ -117,7 +121,7 @@ function expr_consume($expr)
         foreach ($expr->items as $item) {
             expr_consume($item);
         }
-    } elseif (is_expr($expr, ['PreInc', 'PostInc'])) {
+    } elseif (is_expr($expr, ['PreInc', 'PostInc', 'PreDec', 'PostDec'])) {
         expr_consume($expr->var);
     } elseif ($expr instanceof PhpParser\Node\Expr\StaticCall) {
         $class = $expr->parts[0];
