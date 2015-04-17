@@ -106,10 +106,14 @@ function expr_consume($expr)
             expr_consume($expr->if);
         }
         expr_consume($expr->else);
-    } elseif ($expr instanceof PhpParser\Node\Expr\Assign || is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\')) {
+    } elseif (is_prefix($expr, 'PhpParser\\Node\\Expr\\Cast\\') || $expr instanceof PhpParser\Node\Expr\Assign || is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\')) {
         expr_consume($expr->expr);
-    } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable || $expr instanceof PhpParser\Node\Expr\New_) {
+    } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable || $expr instanceof PhpParser\Node\Expr\New_ || $expr instanceof PhpParser\Node\Expr\StaticPropertyFetch) {
         // do nothing
+    } elseif ($expr instanceof PhpParser\Node\Expr\Isset_) {
+        foreach ($expr->vars as $var) {
+            expr_consume($var);
+        }
     } elseif ($expr instanceof PhpParser\Node\Expr\PropertyFetch) {
         expr_consume($expr->var);
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
