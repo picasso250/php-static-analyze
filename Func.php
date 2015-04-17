@@ -28,7 +28,11 @@ class Func
 		$buildin = require (__DIR__.'/func_types.php');
 		$name = $call->name->parts[0];
 		if (isset($buildin[$name])) {
-			return $buildin[$name];
+			$type = new Type();
+			$type->extend($buildin[$name]);
+			return $type;
+		} else {
+
 		}
 		throw new Exception("no function $name", 1);
 	}
