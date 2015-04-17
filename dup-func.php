@@ -91,12 +91,16 @@ function _consume_func($stmts)
 function expr_consume($expr)
 {
     global $table;
-    if ($expr instanceof PhpParser\Node\Expr\BinaryOp\Concat || $expr instanceof PhpParser\Node\Expr\BinaryOp\Greater) {
+    if (is_prefix($expr, 'PhpParser\\Node\\Expr\\BinaryOp')) {
         expr_consume($expr->left);
         expr_consume($expr->right);
+    } elseif ($expr instanceof PhpParser\Node\Expr\Ternary) {
+        expr_consume($expr->cond);
+        expr_consume($expr->if);
+        expr_consume($expr->else);
     } elseif ($expr instanceof PhpParser\Node\Expr\Assign || is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\')) {
         expr_consume($expr->expr);
-    } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable) {
+    } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable || $expr instanceof PhpParser\Node\Expr\New_) {
         // do nothing
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayItem) {
         expr_consume($expr->value);
