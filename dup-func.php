@@ -9,6 +9,13 @@ $ignore = ['vendor'];
 handle_dir($argv[1], 'read_func'); // build
 handle_dir($argv[1], 'consume_func'); // consume
 // print_r($table);
+foreach ($table as $c => $value) {
+    foreach ($value as $m => $count) {
+        if ($count == 0) {
+             echo "$c::$m() not used\n";
+        }
+    }
+}
 
 function handle_dir($dir, $callback)
 {
