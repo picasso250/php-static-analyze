@@ -86,7 +86,7 @@ function _consume_func($stmts)
                 }
                 _consume_func($case->stmts);
             }
-        } elseif ($stmt instanceof PhpParser\Node\Stmt\ClassConst || $stmt instanceof PhpParser\Node\Stmt\Continue_ || $stmt instanceof PhpParser\Node\Stmt\Break_ || $stmt instanceof PhpParser\Node\Stmt\Static_) {
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\ClassConst || $stmt instanceof PhpParser\Node\Stmt\Continue_ || $stmt instanceof PhpParser\Node\Stmt\Break_ || $stmt instanceof PhpParser\Node\Stmt\Static_ || $stmt instanceof PhpParser\Node\Stmt\Property) {
             // do nothing
         } else {
             print_r($stmt);;
@@ -94,22 +94,27 @@ function _consume_func($stmts)
         }
     }
 }
+function expr_stmt_consume($es)
+{
+}
 function expr_consume($expr)
 {
     global $table;
     if (is_prefix($expr, 'PhpParser\\Node\\Expr\\BinaryOp')) {
         expr_consume($expr->left);
         expr_consume($expr->right);
+    } elseif (is_prefix($expr, 'PhpParser\\Node\\Expr\\Cast\\') || $expr instanceof PhpParser\Node\Expr\Assign || is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\') || $expr instanceof PhpParser\Node\Expr\Empty_) {
+        expr_consume($expr->expr);
     } elseif ($expr instanceof PhpParser\Node\Expr\Ternary) {
         expr_consume($expr->cond);
         if ($expr->if) {
             expr_consume($expr->if);
         }
         expr_consume($expr->else);
-    } elseif (is_prefix($expr, 'PhpParser\\Node\\Expr\\Cast\\') || $expr instanceof PhpParser\Node\Expr\Assign || is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\')) {
-        expr_consume($expr->expr);
     } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable || $expr instanceof PhpParser\Node\Expr\New_ || $expr instanceof PhpParser\Node\Expr\StaticPropertyFetch) {
         // do nothing
+    } elseif ($expr instanceof PhpParser\Node\Expr\Closure) {
+        _consume_func($expr->stmts);
     } elseif ($expr instanceof PhpParser\Node\Expr\Isset_) {
         foreach ($expr->vars as $var) {
             expr_consume($var);
