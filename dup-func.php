@@ -64,6 +64,10 @@ function _consume_func($stmts)
     foreach ($stmts as $stmt) {
         if ($stmt->stmts || $stmt->stmts === array()) {
             _consume_func($stmt->stmts);
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\Unset_) {
+            foreach ($stmt->vars as $var) {
+                expr_consume($var);
+            }
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Echo_) {
             foreach ($stmt->exprs as $expr) {
                 expr_consume($expr);
@@ -80,7 +84,7 @@ function _consume_func($stmts)
                 }
                 _consume_func($case->stmts);
             }
-        } elseif ($stmt instanceof PhpParser\Node\Stmt\ClassConst || $stmt instanceof PhpParser\Node\Stmt\Continue_ || $stmt instanceof PhpParser\Node\Stmt\Break_) {
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\ClassConst || $stmt instanceof PhpParser\Node\Stmt\Continue_ || $stmt instanceof PhpParser\Node\Stmt\Break_ || $stmt instanceof PhpParser\Node\Stmt\Static_) {
             // do nothing
         } else {
             print_r($stmt);;
@@ -96,18 +100,25 @@ function expr_consume($expr)
         expr_consume($expr->right);
     } elseif ($expr instanceof PhpParser\Node\Expr\Ternary) {
         expr_consume($expr->cond);
-        expr_consume($expr->if);
+        if ($expr->if) {
+            expr_consume($expr->if);
+        }
         expr_consume($expr->else);
     } elseif ($expr instanceof PhpParser\Node\Expr\Assign || is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\')) {
         expr_consume($expr->expr);
     } elseif (is_prefix($expr, 'PhpParser\\Node\\Scalar\\') || $expr instanceof PhpParser\Node\Expr\ConstFetch || $expr instanceof PhpParser\Node\Expr\Variable || $expr instanceof PhpParser\Node\Expr\New_) {
         // do nothing
+    } elseif ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
+        expr_consume($expr->var);
+        expr_consume($expr->dim);
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayItem) {
         expr_consume($expr->value);
     } elseif ($expr instanceof PhpParser\Node\Expr\Array_) {
         foreach ($expr->items as $item) {
             expr_consume($item);
         }
+    } elseif (is_expr($expr, ['PreInc', 'PostInc'])) {
+        expr_consume($expr->var);
     } elseif ($expr instanceof PhpParser\Node\Expr\StaticCall) {
         $class = $expr->parts[0];
         $name = $expr->name;
@@ -124,6 +135,16 @@ function expr_consume($expr)
         print_r($expr);
         throw new Exception("unknown expr", 1);
     }
+}
+function is_expr($obj, $types)
+{
+    foreach ($types as $type) {
+        $t = "PhpParser\\Node\\Expr\\$type";
+        if ($obj instanceof $t) {
+            return true;
+        }
+    }
+    return false;
 }
 function is_prefix($obj, $prefix)
 {
