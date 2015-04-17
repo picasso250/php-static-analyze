@@ -8,6 +8,7 @@ $table = [];
 $ignore = ['vendor'];
 handle_dir($argv[1], 'read_func'); // build
 handle_dir($argv[1], 'consume_func'); // consume
+print_r($table);
 
 function handle_dir($dir, $callback)
 {
@@ -133,13 +134,8 @@ function expr_consume($expr)
     } elseif (is_expr($expr, ['PreInc', 'PostInc', 'PreDec', 'PostDec'])) {
         expr_consume($expr->var);
     } elseif ($expr instanceof PhpParser\Node\Expr\StaticCall) {
-        $class = $expr->parts[0];
-        $name = $expr->name;
-        if (isset($table[$class][$name])) {
-            $table[$class][$name]++;
-        } else {
-            all_method_incr($name);
-        }
+        $class = $expr->class->parts[0];
+        class_method_incr($class, $expr->name);
     } elseif ($expr instanceof PhpParser\Node\Expr\MethodCall) {
         all_method_incr($expr->name);
     } elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
@@ -168,6 +164,15 @@ function is_prefix($obj, $prefix)
         return false;
     }
     return strpos(get_class($obj), $prefix) === 0;
+}
+function class_method_incr($class, $method)
+{
+    if (isset($table[$class][$method])) {
+        $table[$class][$method]++;
+    } else {
+        error_log("$class::$method() not found");
+        all_method_incr($method);
+    }
 }
 function all_method_incr($method)
 {
