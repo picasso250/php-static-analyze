@@ -46,3 +46,4 @@ vendor/
 Foo.php
 function.php
 a.txt
+not_used_functions.txt

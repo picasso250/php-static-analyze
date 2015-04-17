@@ -9,14 +9,25 @@ $ignore = ['vendor'];
 handle_dir($argv[1], 'read_func'); // build
 handle_dir($argv[1], 'consume_func'); // consume
 // print_r($table);
+
 foreach ($table as $c => $value) {
     foreach ($value as $m => $count) {
-        if ($count == 0) {
-             echo "$c::$m() not used\n";
+        if ($count == 0 && !is_method_ignore($m)) {
+            echo "$c::$m() not used\n";
         }
     }
 }
 
+function is_method_ignore($method)
+{
+    $ignore_method_pattern_list = ['/^action[A-Z]/', '/^__/'];
+    foreach ($ignore_method_pattern_list as $pattern) {
+        if (preg_match($pattern, $method)) {
+            return true;
+        }
+    }
+    return false;
+}
 function handle_dir($dir, $callback)
 {
     global $ignore;
