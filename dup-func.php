@@ -1,5 +1,15 @@
 <?php
 
+if (!isset($argv[1])) {
+    echo <<<EOF
+Tool that find not used functions(methods).
+
+    Usage: $argv[0] <code_dir> [--lib lib_root]
+
+EOF;
+    exit(1);
+}
+
 require (__DIR__).'/vendor/autoload.php';
 require (__DIR__).'/autoload.php';
 require (__DIR__).'/logic.php';
