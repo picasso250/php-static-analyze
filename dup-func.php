@@ -10,6 +10,11 @@ $table = [
 $class_hierarchy = [];
 $ignore = ['vendor'];
 handle_dir($argv[1], 'read_func'); // build
+if ($libs = get_arg_n('--lib')) {
+    foreach ($libs as $lib) {
+        handle_dir($lib, 'read_func'); // build
+    }
+}
 handle_dir($argv[1], 'consume_func'); // consume
 // print_r($table);
 
@@ -21,6 +26,23 @@ foreach ($table as $c => $value) {
     }
 }
 
+function get_arg_n($name)
+{
+    global $argv;
+    reset($argv);
+    next($argv);
+    $ret = [];
+    while (true) {
+        $name_ = current($argv);
+        if ($name_ === $name) {
+            $ret[] = next($argv);
+        }
+        if (next($argv) === false) {
+            break;
+        }
+    }
+    return $ret;
+}
 function is_method_ignore($method)
 {
     $ignore_method_pattern_list = [
