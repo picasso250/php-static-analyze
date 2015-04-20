@@ -302,7 +302,12 @@ function class_method_incr($class, $method)
         $table[$class][$method]++;
     } else {
         error_log("$class::$method() not found");
+        if (isset($class_hierarchy[$class])) {
+            class_method_incr($class_hierarchy[$class], $method);
+        } else {
+            error_log("top");
         all_method_incr($method);
+        }
     }
 }
 function all_method_incr($method)
