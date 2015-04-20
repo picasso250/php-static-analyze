@@ -110,6 +110,24 @@ function consume_stmts($stmts)
             if ($stmt->expr) {
                 expr_consume($stmt->expr);
             }
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\For_) {
+            error_log("for");
+            consume_stmts($stmt->init);
+            foreach ($stmt->cond as $cond) {
+                expr_consume($cond);
+            }
+            foreach ($stmt->loop as $loop) {
+                expr_consume($loop);
+            }
+            consume_stmts($stmt->stmts);
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\Foreach_) {
+            error_log("foreach");
+            expr_consume($stmt->expr);
+            consume_stmts($stmt->stmts);
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\While_ || $stmt instanceof PhpParser\Node\Stmt\Do_) {
+            error_log("while or do");
+            expr_consume($stmt->cond);
+            consume_stmts($stmt->stmts);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\If_) {
             error_log("consume if");
             expr_consume($stmt->cond);
