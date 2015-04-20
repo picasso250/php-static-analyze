@@ -7,6 +7,7 @@ require (__DIR__).'/logic.php';
 $table = [
     'Yii' => ['app' => 0],
 ];
+$class_hierarchy = [];
 $ignore = ['vendor'];
 handle_dir($argv[1], 'read_func'); // build
 handle_dir($argv[1], 'consume_func'); // consume
@@ -58,12 +59,19 @@ function handle_dir($dir, $callback)
 function read_func($file)
 {
     global $table;
+    global $class_hierarchy;
     $code = file_get_contents($file);
     $parser = new PhpParser\Parser(new PhpParser\Lexer);
     $stmts = $parser->parse($code);
     foreach ($stmts as $stmt) {
         if ($stmt instanceof PhpParser\Node\Stmt\Class_) {
             error_log("class $stmt->name");
+            if ($stmt->extends) {
+                assert(count($stmt->extends->parts) == 1);
+                $parent = $stmt->extends->parts[0];
+                $class_hierarchy[$stmt->name] = $parent;
+                error_log("$stmt->name <== $parent");
+            }
             foreach ($stmt->stmts as $s) {
                 if ($s instanceof PhpParser\Node\Stmt\ClassMethod) {
                     // echo "find method $s->name\n";
@@ -88,7 +96,7 @@ function consume_func($file)
 function consume_stmts($stmts)
 {
     foreach ($stmts as $stmt) {
-        error_log("consume statement: ".get_class($stmt));
+        // error_log("consume statement: ".get_class($stmt));
         if ($stmt instanceof PhpParser\Node\Stmt\Class_) {
             $GLOBALS['current_class'] = $stmt->name;
             if ($stmt->extends) {
@@ -111,7 +119,7 @@ function consume_stmts($stmts)
                 expr_consume($stmt->expr);
             }
         } elseif ($stmt instanceof PhpParser\Node\Stmt\For_) {
-            error_log("for");
+            // error_log("for");
             consume_stmts($stmt->init);
             foreach ($stmt->cond as $cond) {
                 expr_consume($cond);
@@ -121,26 +129,26 @@ function consume_stmts($stmts)
             }
             consume_stmts($stmt->stmts);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Foreach_) {
-            error_log("foreach");
+            // error_log("foreach");
             expr_consume($stmt->expr);
             consume_stmts($stmt->stmts);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\While_ || $stmt instanceof PhpParser\Node\Stmt\Do_) {
-            error_log("while or do");
+            // error_log("while or do");
             expr_consume($stmt->cond);
             consume_stmts($stmt->stmts);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\If_) {
-            error_log("consume if");
+            // error_log("consume if");
             expr_consume($stmt->cond);
             consume_stmts($stmt->stmts);
             if ($stmt->elseifs) {
-                error_log("elseifs");
+                // error_log("elseifs");
                 foreach ($stmt->elseifs as $elseif) {
                     expr_consume($elseif->cond);
                     consume_stmts($elseif->stmts);
                 }
             }
             if ($stmt->else) {
-                error_log("else");
+                // error_log("else");
                 consume_stmts($stmt->else->stmts);
             }
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Switch_) {
