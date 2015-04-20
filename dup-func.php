@@ -83,11 +83,12 @@ function consume_func($file)
     $code = file_get_contents($file);
     $parser = new PhpParser\Parser(new PhpParser\Lexer);
     $stmts = $parser->parse($code);
-    _consume_func($stmts);
+    consume_stmts($stmts);
 }
-function _consume_func($stmts)
+function consume_stmts($stmts)
 {
     foreach ($stmts as $stmt) {
+        error_log("consume statement: ".get_class($stmt));
         if ($stmt instanceof PhpParser\Node\Stmt\Class_) {
             $GLOBALS['current_class'] = $stmt->name;
             if ($stmt->extends) {
@@ -95,9 +96,7 @@ function _consume_func($stmts)
                 $GLOBALS['current_class_parent'] = $stmt->extends->parts[0];
             }
         }
-        if ($stmt->stmts || $stmt->stmts === array()) {
-            _consume_func($stmt->stmts);
-        } elseif ($stmt instanceof PhpParser\Node\Stmt\Unset_) {
+        if ($stmt instanceof PhpParser\Node\Stmt\Unset_) {
             foreach ($stmt->vars as $var) {
                 expr_consume($var);
             }
@@ -111,16 +110,33 @@ function _consume_func($stmts)
             if ($stmt->expr) {
                 expr_consume($stmt->expr);
             }
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\If_) {
+            error_log("consume if");
+            expr_consume($stmt->cond);
+            consume_stmts($stmt->stmts);
+            if ($stmt->elseifs) {
+                error_log("elseifs");
+                foreach ($stmt->elseifs as $elseif) {
+                    expr_consume($elseif->cond);
+                    consume_stmts($elseif->stmts);
+                }
+            }
+            if ($stmt->else) {
+                error_log("else");
+                consume_stmts($stmt->else->stmts);
+            }
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Switch_) {
             expr_consume($stmt->cond);
             foreach ($stmt->cases as $case) {
                 if ($case->cond) {
                     expr_consume($case->cond);
                 }
-                _consume_func($case->stmts);
+                consume_stmts($case->stmts);
             }
         } elseif (is_ignore_stmt($stmt)) {
             // do nothing
+        } elseif ($stmt->stmts || $stmt->stmts === array()) {
+            consume_stmts($stmt->stmts);
         } else {
             print_r($stmt);;
             throw new Exception("unknown stmt", 1);
@@ -146,6 +162,9 @@ function expr_consume($expr)
         expr_consume($expr->right);
     } elseif (is_single_expr($expr)) {
         expr_consume($expr->expr);
+    } elseif ($expr instanceof PhpParser\Node\Expr\Instanceof_) {
+        expr_consume($expr->expr);
+        expr_consume($expr->class);
     } elseif ($expr instanceof PhpParser\Node\Expr\Ternary) {
         expr_consume($expr->cond);
         if ($expr->if) {
@@ -155,7 +174,7 @@ function expr_consume($expr)
     } elseif (is_ignore_expr($expr)) {
         // do nothing
     } elseif ($expr instanceof PhpParser\Node\Expr\Closure) {
-        _consume_func($expr->stmts);
+        consume_stmts($expr->stmts);
     } elseif ($expr instanceof PhpParser\Node\Expr\Isset_) {
         foreach ($expr->vars as $var) {
             expr_consume($var);
@@ -178,6 +197,7 @@ function expr_consume($expr)
         $class = $expr->class->parts[0];
         if ($class == 'self') {
             $class = $GLOBALS['current_class'];
+            error_log("self --> $class");
         } elseif ($class == 'parent') {
             $class = $GLOBALS['current_class_parent'];
         }
@@ -185,16 +205,16 @@ function expr_consume($expr)
     } elseif ($expr instanceof PhpParser\Node\Expr\MethodCall) {
         $var = $expr->var;
         if ($var->name === 'this') { // inheretation
-            error_log("this --> {$GLOBALS['current_class']}");
+            // error_log("this --> {$GLOBALS['current_class']}");
             class_method_incr($GLOBALS['current_class'], $expr->name);
         } elseif ($var instanceof PhpParser\Node\Expr\StaticCall && $var->name === 'model') {
             assert(count($var->class->parts) == 1);
             $name = $var->class->parts[0];
             if ($name === 'self') {
                 $name = $GLOBALS['current_class'];
-                error_log("(self --> $name)::model()");
+                // error_log("(self --> $name)::model()");
             } else {
-                error_log("$name::model()");
+                // error_log("$name::model()");
             }
             class_method_incr($name, $expr->name);
         } else {
@@ -216,6 +236,7 @@ function is_ignore_expr($expr)
         || $expr instanceof PhpParser\Node\Expr\StaticPropertyFetch
         || $expr instanceof PhpParser\Node\Expr\Include_
         || $expr instanceof PhpParser\Node\Expr\Exit_
+        || $expr instanceof PhpParser\Node\Name
         || $expr instanceof PhpParser\Node\Expr\ClassConstFetch;
 }
 function is_single_expr($expr)
