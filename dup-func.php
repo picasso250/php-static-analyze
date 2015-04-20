@@ -4,15 +4,14 @@ require (__DIR__).'/vendor/autoload.php';
 require (__DIR__).'/autoload.php';
 require (__DIR__).'/logic.php';
 
-$table = [
-    'Yii' => ['app' => 0],
-];
+$table = [];
+$table_lib = [];
 $class_hierarchy = [];
-$ignore = ['vendor'];
+$ignore = ['vendor', 'data', 'views', 'htmlpurifier', 'messages'];
 handle_dir($argv[1], 'read_func'); // build
 if ($libs = get_arg_n('--lib')) {
     foreach ($libs as $lib) {
-        handle_dir($lib, 'read_func'); // build
+        handle_dir($lib, 'read_lib_func'); // build
     }
 }
 handle_dir($argv[1], 'consume_func'); // consume
@@ -46,10 +45,11 @@ function get_arg_n($name)
 function is_method_ignore($method)
 {
     $ignore_method_pattern_list = [
-        '/^action[A-Z]/',
+        '/^action[A-Z0-9]/',
         '/^__/',
         '/^tableName$/',
-        '/^beforeAction$/'
+        '/^beforeAction$/',
+        '/^model$/',
     ];
     foreach ($ignore_method_pattern_list as $pattern) {
         if (preg_match($pattern, $method)) {
@@ -98,6 +98,36 @@ function read_func($file)
                 if ($s instanceof PhpParser\Node\Stmt\ClassMethod) {
                     // echo "find method $s->name\n";
                     $table[$stmt->name][$s->name] = 0;
+                } else {
+                    if (! $s instanceof PhpParser\Node\Stmt\Property && ! $s instanceof PhpParser\Node\Stmt\ClassConst) {
+                        print_r($s);
+                        throw new Exception("what?", 1);
+                    }
+                }
+            }
+        }
+    }
+}
+function read_lib_func($file)
+{
+    global $table_lib;
+    global $class_hierarchy;
+    $code = file_get_contents($file);
+    $parser = new PhpParser\Parser(new PhpParser\Lexer);
+    $stmts = $parser->parse($code);
+    foreach ($stmts as $stmt) {
+        if ($stmt instanceof PhpParser\Node\Stmt\Class_) {
+            error_log("class $stmt->name");
+            if ($stmt->extends) {
+                assert(count($stmt->extends->parts) == 1);
+                $parent = $stmt->extends->parts[0];
+                $class_hierarchy[$stmt->name] = $parent;
+                error_log("$stmt->name <== $parent");
+            }
+            foreach ($stmt->stmts as $s) {
+                if ($s instanceof PhpParser\Node\Stmt\ClassMethod) {
+                    // echo "find method $s->name\n";
+                    $table_lib[$stmt->name][$s->name] = 0;
                 } else {
                     if (! $s instanceof PhpParser\Node\Stmt\Property && ! $s instanceof PhpParser\Node\Stmt\ClassConst) {
                         print_r($s);
@@ -320,15 +350,23 @@ function is_prefix($obj, $prefix)
 function class_method_incr($class, $method)
 {
     global $table;
+    global $table_lib;
+    global $class_hierarchy;
     if (isset($table[$class][$method])) {
+        error_log("$class::$method() incr");
         $table[$class][$method]++;
+    } elseif (isset($table_lib[$class][$method])) {
+        error_log("$class::$method() found");
+        // do nothing
     } else {
         error_log("$class::$method() not found");
         if (isset($class_hierarchy[$class])) {
-            class_method_incr($class_hierarchy[$class], $method);
+            $parent = $class_hierarchy[$class];
+            error_log("$class ---> $parent");
+            class_method_incr($parent, $method);
         } else {
-            error_log("top");
-        all_method_incr($method);
+            error_log("top $method()");
+            all_method_incr($method);
         }
     }
 }
