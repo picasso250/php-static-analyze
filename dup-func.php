@@ -185,7 +185,18 @@ function expr_consume($expr)
     } elseif ($expr instanceof PhpParser\Node\Expr\MethodCall) {
         $var = $expr->var;
         if ($var->name === 'this') { // inheretation
+            error_log("this --> {$GLOBALS['current_class']}");
             class_method_incr($GLOBALS['current_class'], $expr->name);
+        } elseif ($var instanceof PhpParser\Node\Expr\StaticCall && $var->name === 'model') {
+            assert(count($var->class->parts) == 1);
+            $name = $var->class->parts[0];
+            if ($name === 'self') {
+                $name = $GLOBALS['current_class'];
+                error_log("(self --> $name)::model()");
+            } else {
+                error_log("$name::model()");
+            }
+            class_method_incr($name, $expr->name);
         } else {
             all_method_incr($expr->name);
         }
