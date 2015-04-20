@@ -2,7 +2,7 @@
 
 if (!isset($argv[1])) {
     echo <<<EOF
-Tool that find not used functions(methods).
+Tool that find unused functions(methods).
 
     Usage: $argv[0] <code_dir> [--lib lib_root]
 
