@@ -119,13 +119,12 @@ function process_function($s)
         declare_var($param, $table);
     }
     consume_stmts($s->stmts, $table);
-    print_r($table);
+    // print_r($table);
     foreach ($table['use_var'] as $name => $c) {
         if ($c === 0) {
-            $attrs = $s->getAttributes();
-            echo "\$$name not used in function $s->name()\n";
+            $attrs = $table['declare_var'][$name]->getAttributes();
+            echo "\$$name declared but not used in function $s->name() $attrs[startLine]-$attrs[endLine]\n";
             echo get_file_line($attrs['startLine'], $attrs['endLine']);
-            throw new Exception("Error Processing Request", 1);
         }
     }
 }
@@ -165,7 +164,9 @@ function consume_stmts($stmts, &$table)
             }
             consume_stmts($stmt->stmts, $table);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Foreach_) {
-            declare_var($stmt->keyVar, $table);
+            if ($stmt->keyVar) {
+                declare_var($stmt->keyVar, $table);
+            }
             declare_var($stmt->valueVar, $table);
             expr_use_var($stmt->expr, $table);
             consume_stmts($stmt->stmts, $table);
@@ -261,7 +262,9 @@ function use_var($var, &$table, $init = 1)
     } elseif ($var instanceof PhpParser\Node\Expr\Variable) {
         $name = $var->name;
         if (!isset($table['declare_var'][$name])) {
-            throw new Exception("\$$name not declared but used", 1);
+            echo "\$$name not declared but used\n";
+            $attrs = $var->getAttributes();
+            throw new Exception("\$$name not declared but used $attrs[startLine]-$attrs[endLine]", 1);
         }
         $attrs = $var->getAttributes();
         error_log("\$$name used in $attrs[startLine] - $attrs[endLine]");
@@ -272,9 +275,11 @@ function use_var($var, &$table, $init = 1)
             $table['use_var'][$name] = $init;
         }
     } elseif ($var instanceof PhpParser\Node\Expr\List_) {
+        error_log("list()");
         foreach ($var->vars as $v) {
-            use_var($v, $table, $init);
+            declare_var($v, $table);
         }
+
     } else {
         print_r($var);
         throw new Exception("var", 1);
@@ -297,9 +302,13 @@ function declare_var($var, &$table)
         declare_var($var->var, $table);
     } elseif ($var instanceof PhpParser\Node\Expr\ArrayDimFetch) {
         declare_var($var->var, $table);
+    } elseif ($var instanceof PhpParser\Node\Expr\List_) {
+        foreach ($var->vars as $v) {
+            declare_var($v, $table);
+        }
     } else {
         print_r($var);
-        throw new Exception("var ", 1);
+        throw new Exception("var ? declare_var", 1);
     }
 }
 function is_ignore_stmt($stmt)
@@ -334,7 +343,7 @@ function expr_use_var($expr, &$table)
         // }
     } elseif ($expr instanceof PhpParser\Node\Expr\Assign) {
         expr_use_var($expr->expr, $table, $table);
-        change_var($expr->var, $table);
+        declare_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Instanceof_) {
         expr_use_var($expr->expr, $table);
         expr_use_var($expr->class, $table);
