@@ -116,11 +116,11 @@ function process_function($s)
     error_log(__FUNCTION__." $s->name()");
     $table = [];
     foreach ($s->params as $param) {
-        $table[$param->name] = 0;
+        declare_var($param, $table);
     }
     consume_stmts($s->stmts, $table);
     print_r($table);
-    foreach ($table as $name => $c) {
+    foreach ($table['use_var'] as $name => $c) {
         if ($c === 0) {
             $attrs = $s->getAttributes();
             echo "\$$name not used in function $s->name()\n";
@@ -149,7 +149,7 @@ function consume_stmts($stmts, &$table)
             expr_use_var($stmt, $table);
         } elseif ($stmt instanceof PhpParser\Node\Expr\Assign) {
             expr_use_var($stmt->expr, $table, $table);
-            use_var($stmt->var, $table);
+            change_var($stmt->var, $table);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Return_ || $stmt instanceof PhpParser\Node\Stmt\Throw_) {
             if ($stmt->expr) {
                 expr_use_var($stmt->expr, $table);
@@ -165,7 +165,8 @@ function consume_stmts($stmts, &$table)
             }
             consume_stmts($stmt->stmts, $table);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Foreach_) {
-            // error_log("foreach");
+            declare_var($stmt->keyVar, $table);
+            declare_var($stmt->valueVar, $table);
             expr_use_var($stmt->expr, $table);
             consume_stmts($stmt->stmts, $table);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\While_ || $stmt instanceof PhpParser\Node\Stmt\Do_) {
@@ -234,7 +235,7 @@ function change_var($var, &$table, $init = 1)
         declare_var($var, $table);
         $name = $var->name;
         $attrs = $var->getAttributes();
-        error_log("\$$name used in $attrs[startLine] - $attrs[endLine]");
+        error_log("\$$name changed in $attrs[startLine] - $attrs[endLine]");
         error_log(get_file_line($attrs['startLine'], $attrs['endLine']));
         if (isset($table['change_var'][$name])) {
             $table['change_var'][$name]++;
@@ -260,7 +261,7 @@ function use_var($var, &$table, $init = 1)
     } elseif ($var instanceof PhpParser\Node\Expr\Variable) {
         $name = $var->name;
         if (!isset($table['declare_var'][$name])) {
-            throw new Exception("$name not declared but used", 1);
+            throw new Exception("\$$name not declared but used", 1);
         }
         $attrs = $var->getAttributes();
         error_log("\$$name used in $attrs[startLine] - $attrs[endLine]");
@@ -281,11 +282,24 @@ function use_var($var, &$table, $init = 1)
 }
 function declare_var($var, &$table)
 {
-    $name = $var->name;
-    if (!isset($table['declare_var'][$name])) {
-        $table['declare_var'][$name] = 1;
-        $attrs = $var->getAttributes();
-        error_log("\$$name declared in $attrs[startLine] - $attrs[endLine]");
+    if ($var instanceof PhpParser\Node\Expr\Variable || $var instanceof PhpParser\Node\Param) {
+        $name = $var->name;
+        if (!isset($table['declare_var'][$name])) {
+            $table['declare_var'][$name] = $var;
+            $table['use_var'][$name] = 0;
+            $attrs = $var->getAttributes();
+            error_log("\$$name declared in $attrs[startLine] - $attrs[endLine]");
+        }
+    } elseif ($var instanceof PhpParser\Node\Expr\StaticCall) {
+
+    } elseif ($var instanceof PhpParser\Node\Expr\PropertyFetch) {
+        assert(is_string($var->name));
+        declare_var($var->var, $table);
+    } elseif ($var instanceof PhpParser\Node\Expr\ArrayDimFetch) {
+        declare_var($var->var, $table);
+    } else {
+        print_r($var);
+        throw new Exception("var ", 1);
     }
 }
 function is_ignore_stmt($stmt)
@@ -312,17 +326,16 @@ function expr_use_var($expr, &$table)
         expr_use_var($expr->expr, $table, $table);
         use_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Empty_) {
-        $expr = $expr->expr;
-        if ($expr->name) {
-            use_var($expr, $table, 0);
-        } else {
-            use_var($expr, $table, 0);
-        }
+        // $expr = $expr->expr;
+        // if ($expr->name) {
+        //     use_var($expr, $table, 0);
+        // } else {
+        //     use_var($expr, $table, 0);
+        // }
     } elseif ($expr instanceof PhpParser\Node\Expr\Assign) {
         expr_use_var($expr->expr, $table, $table);
-        use_var($expr->var, $table);
+        change_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Instanceof_) {
-        print_r($expr);exit;
         expr_use_var($expr->expr, $table);
         expr_use_var($expr->class, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Ternary) {
@@ -337,9 +350,9 @@ function expr_use_var($expr, &$table)
         assert(count($expr->uses) === 0);
         process_function($expr);
     } elseif ($expr instanceof PhpParser\Node\Expr\Isset_) {
-        foreach ($expr->vars as $var) {
-            declare_var($var, $table);
-        }
+        // foreach ($expr->vars as $var) {
+        //     declare_var($var, $table);
+        // }
     } elseif ($expr instanceof PhpParser\Node\Expr\Variable) {
         use_var($expr, $table, 1);
     } elseif ($expr instanceof PhpParser\Node\Expr\New_) {
