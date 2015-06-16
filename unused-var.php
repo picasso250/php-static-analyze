@@ -283,10 +283,11 @@ function use_var($var, &$table, $init = 1)
         foreach ($var->vars as $v) {
             declare_var($v, $table);
         }
-
+    } elseif ($var instanceof PhpParser\Node\Expr\StaticCall) {
+        expr_use_var($var, $table);
     } else {
         print_r($var);
-        throw new Exception("var", 1);
+        throw new Exception("use_var", 1);
     }
 }
 function declare_var($var, &$table)
@@ -390,8 +391,10 @@ function expr_use_var($expr, &$table)
     } elseif ($expr instanceof PhpParser\Node\Expr\PropertyFetch) {
         expr_use_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
-        expr_use_var($expr->var, $table);
-        expr_use_var($expr->dim, $table);
+        use_var($expr->var, $table);
+        if ($expr->dim) {
+            expr_use_var($expr->dim, $table);
+        }
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayItem) {
         expr_use_var($expr->value, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Array_) {
@@ -400,7 +403,17 @@ function expr_use_var($expr, &$table)
         }
     } elseif (is_expr($expr, ['PreInc', 'PostInc', 'PreDec', 'PostDec'])) {
         expr_use_var($expr->var, $table);
-    } elseif ($expr instanceof PhpParser\Node\Expr\StaticCall || $expr instanceof PhpParser\Node\Expr\MethodCall || $expr instanceof PhpParser\Node\Expr\FuncCall) {
+    } elseif ($expr instanceof PhpParser\Node\Expr\StaticCall) {
+        assert(count($expr->class->parts) === 1);
+        foreach ($expr->args as $arg) {
+            expr_use_var($arg, $table);
+        }
+    } elseif ($expr instanceof PhpParser\Node\Expr\MethodCall) {
+        expr_use_var($expr->var, $table);
+        foreach ($expr->args as $arg) {
+            expr_use_var($arg, $table);
+        }
+    } elseif ($expr instanceof PhpParser\Node\Expr\FuncCall) {
         foreach ($expr->args as $arg) {
             expr_use_var($arg, $table);
         }
