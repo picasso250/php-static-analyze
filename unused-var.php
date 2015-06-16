@@ -104,6 +104,14 @@ function process_function($s)
         $table[$param->name] = 0;
     }
     consume_stmts($s->stmts, $table);
+    print_r($table);
+    foreach ($table as $name => $c) {
+        if ($c === 0) {
+            print_r($s);
+            echo "$c not used in function  $s->name\n";
+            throw new Exception("Error Processing Request", 1);
+        }
+    }
 }
 function consume_stmts($stmts, &$table)
 {
@@ -182,6 +190,18 @@ function consume_stmts($stmts, &$table)
         }
     }
 }
+function get_file_line($startLine, $endLine)
+{
+    static $cache;
+    if (empty($cache)) {
+        $cache = file($GLOBALS['argv'][1]);
+    }
+    foreach ($cache as $i => $line) {
+        if ($startLine === $i+1) {
+            return $line;
+        }
+    }
+}
 function use_incr($var, &$table, $init = 1)
 {
     if ($var instanceof PhpParser\Node\Expr\ArrayDimFetch) {
@@ -191,6 +211,10 @@ function use_incr($var, &$table, $init = 1)
         use_incr($var->var, $table, $init);
     } elseif ($var instanceof PhpParser\Node\Expr\Variable) {
         $name = $var->name;
+        var_dump($var->startLine);
+        $attrs = $var->getAttributes();
+        error_log("\$$name used in $attrs[startLine] - $attrs[endLine]");
+        error_log(get_file_line($attrs['startLine'], $attrs['endLine']));
         if (isset($table[$name])) {
             $table[$name]++;
         } else {
@@ -242,7 +266,7 @@ function expr_use_var($expr, &$table)
         if ($expr->name) {
             use_incr($expr, $table, 0);
         } else {
-            throw new Exception("Error Processing Request", 1);
+            use_incr($expr, $table, 0);
         }
     } elseif ($expr instanceof PhpParser\Node\Expr\Assign) {
         error_log("Assign");
@@ -261,11 +285,24 @@ function expr_use_var($expr, &$table)
     } elseif (is_ignore_expr($expr)) {
         // do nothing
     } elseif ($expr instanceof PhpParser\Node\Expr\Closure) {
-        consume_stmts($expr->stmts);
+        assert(count($expr->uses) === 0);
+        process_function($expr);
     } elseif ($expr instanceof PhpParser\Node\Expr\Isset_) {
         foreach ($expr->vars as $var) {
             declare_var($var, $table);
         }
+    } elseif ($expr instanceof PhpParser\Node\Expr\Variable) {
+        use_incr($expr, $table, 1);
+    } elseif ($expr instanceof PhpParser\Node\Expr\New_) {
+        foreach ($expr->args as $arg) {
+            expr_use_var($arg, $table);
+        }
+        assert(count($expr->class->parts) === 1);
+    } elseif ($expr instanceof PhpParser\Node\Expr\Include_
+        || $expr instanceof PhpParser\Node\Expr\Exit_) {
+        print_r($expr);exit;
+    } elseif ($expr instanceof PhpParser\Node\Expr\StaticPropertyFetch) {
+        assert(count($expr->class->parts) === 1);
     } elseif ($expr instanceof PhpParser\Node\Expr\PropertyFetch) {
         expr_use_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\ArrayDimFetch) {
@@ -285,10 +322,9 @@ function expr_use_var($expr, &$table)
         }
     } elseif ($expr instanceof PhpParser\Node\Arg) {
         if ($expr->value) {
-            print_r($expr->value);
+            expr_use_var($expr->value, $table);
         } else {
             throw new Exception("Error Processing Request", 1);
-            
         }
     } else {
         print_r($expr);
@@ -300,17 +336,11 @@ function is_ignore_expr($expr)
 {
     return is_prefix($expr, 'PhpParser\\Node\\Scalar\\')
         || $expr instanceof PhpParser\Node\Expr\ConstFetch
-        || $expr instanceof PhpParser\Node\Expr\Variable
-        || $expr instanceof PhpParser\Node\Expr\New_
-        || $expr instanceof PhpParser\Node\Expr\StaticPropertyFetch
-        || $expr instanceof PhpParser\Node\Expr\Include_
-        || $expr instanceof PhpParser\Node\Expr\Exit_
         || $expr instanceof PhpParser\Node\Name
         || $expr instanceof PhpParser\Node\Expr\ClassConstFetch;
 }
 function is_single_expr($expr)
 {
-    error_log(__LINE__.':'.get_class($expr));
     return is_prefix($expr, 'PhpParser\\Node\\Expr\\Cast\\')
         || $expr instanceof PhpParser\Node\Expr\BooleanNot
         || $expr instanceof PhpParser\Node\Expr\UnaryMinus
