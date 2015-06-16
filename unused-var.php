@@ -25,6 +25,10 @@ require (__DIR__).'/vendor/autoload.php';
 require (__DIR__).'/autoload.php';
 require (__DIR__).'/logic.php';
 
+if (get_arg_bool('-l')) {
+    ini_set('error_log', __DIR__.'/php_error.log');
+}
+
 $table = [];
 $table_lib = [];
 $class_hierarchy = [];
@@ -44,6 +48,16 @@ foreach ($table as $c => $value) {
     }
 }
 
+function get_arg_bool($name)
+{
+    global $argv;
+    foreach ($argv as $i => $s) {
+        if ($s === $name) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function handle_dir($dir, $callback)
 {
@@ -99,6 +113,7 @@ function handle_file($file)
 
 function process_function($s)
 {
+    error_log(__FUNCTION__." $s->name()");
     $table = [];
     foreach ($s->params as $param) {
         $table[$param->name] = 0;
@@ -107,8 +122,9 @@ function process_function($s)
     print_r($table);
     foreach ($table as $name => $c) {
         if ($c === 0) {
-            print_r($s);
-            echo "$c not used in function  $s->name\n";
+            $attrs = $s->getAttributes();
+            echo "\$$name not used in function $s->name()\n";
+            echo get_file_line($attrs['startLine'], $attrs['endLine']);
             throw new Exception("Error Processing Request", 1);
         }
     }
@@ -132,9 +148,8 @@ function consume_stmts($stmts, &$table)
         } elseif (is_prefix($stmt, 'PhpParser\\Node\\Expr\\')) {
             expr_use_var($stmt, $table);
         } elseif ($stmt instanceof PhpParser\Node\Expr\Assign) {
-            error_log("Assign");
             expr_use_var($stmt->expr, $table, $table);
-            use_incr($stmt->var, $table);
+            use_var($stmt->var, $table);
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Return_ || $stmt instanceof PhpParser\Node\Stmt\Throw_) {
             if ($stmt->expr) {
                 expr_use_var($stmt->expr, $table);
@@ -196,33 +211,68 @@ function get_file_line($startLine, $endLine)
     if (empty($cache)) {
         $cache = file($GLOBALS['argv'][1]);
     }
+    $ret = '';
     foreach ($cache as $i => $line) {
-        if ($startLine === $i+1) {
-            return $line;
+        $n = $i+1;
+        if ($startLine <= $n && $n <= $endLine) {
+            $ret .= $line;
+        }
+        if ($n === $endLine) {
+            break;
         }
     }
+    return $ret;
 }
-function use_incr($var, &$table, $init = 1)
+function change_var($var, &$table, $init = 1)
 {
     if ($var instanceof PhpParser\Node\Expr\ArrayDimFetch) {
         if (($var->dim)) {
             expr_use_var($var->dim, $table);
         }
-        use_incr($var->var, $table, $init);
+        change_var($var->var, $table, $init);
     } elseif ($var instanceof PhpParser\Node\Expr\Variable) {
+        declare_var($var, $table);
         $name = $var->name;
-        var_dump($var->startLine);
         $attrs = $var->getAttributes();
         error_log("\$$name used in $attrs[startLine] - $attrs[endLine]");
         error_log(get_file_line($attrs['startLine'], $attrs['endLine']));
-        if (isset($table[$name])) {
-            $table[$name]++;
+        if (isset($table['change_var'][$name])) {
+            $table['change_var'][$name]++;
         } else {
-            $table[$name] = $init;
+            $table['change_var'][$name] = $init;
         }
     } elseif ($var instanceof PhpParser\Node\Expr\List_) {
         foreach ($var->vars as $v) {
-            use_incr($v, $table, $init);
+            use_var($v, $table, $init);
+        }
+    } else {
+        print_r($var);
+        throw new Exception("var", 1);
+    }
+}
+function use_var($var, &$table, $init = 1)
+{
+    if ($var instanceof PhpParser\Node\Expr\ArrayDimFetch) {
+        if (($var->dim)) {
+            expr_use_var($var->dim, $table);
+        }
+        use_var($var->var, $table, $init);
+    } elseif ($var instanceof PhpParser\Node\Expr\Variable) {
+        $name = $var->name;
+        if (!isset($table['declare_var'][$name])) {
+            throw new Exception("$name not declared but used", 1);
+        }
+        $attrs = $var->getAttributes();
+        error_log("\$$name used in $attrs[startLine] - $attrs[endLine]");
+        error_log(get_file_line($attrs['startLine'], $attrs['endLine']));
+        if (isset($table['use_var'][$name])) {
+            $table['use_var'][$name]++;
+        } else {
+            $table['use_var'][$name] = $init;
+        }
+    } elseif ($var instanceof PhpParser\Node\Expr\List_) {
+        foreach ($var->vars as $v) {
+            use_var($v, $table, $init);
         }
     } else {
         print_r($var);
@@ -232,9 +282,10 @@ function use_incr($var, &$table, $init = 1)
 function declare_var($var, &$table)
 {
     $name = $var->name;
-    if (!isset($table[$name])) {
-        $table[$name] = 0;
-    } else {
+    if (!isset($table['declare_var'][$name])) {
+        $table['declare_var'][$name] = 1;
+        $attrs = $var->getAttributes();
+        error_log("\$$name declared in $attrs[startLine] - $attrs[endLine]");
     }
 }
 function is_ignore_stmt($stmt)
@@ -255,23 +306,21 @@ function expr_use_var($expr, &$table)
         expr_use_var($expr->left, $table);
         expr_use_var($expr->right, $table);
     } elseif (is_single_expr($expr)) {
-        error_log("is_single_expr");
         expr_use_var($expr->expr, $table);
     } elseif (is_prefix($expr, 'PhpParser\\Node\\Expr\\AssignOp\\')) {
         error_log("AssignOp");
         expr_use_var($expr->expr, $table, $table);
-        use_incr($expr->var, $table);
+        use_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Empty_) {
         $expr = $expr->expr;
         if ($expr->name) {
-            use_incr($expr, $table, 0);
+            use_var($expr, $table, 0);
         } else {
-            use_incr($expr, $table, 0);
+            use_var($expr, $table, 0);
         }
     } elseif ($expr instanceof PhpParser\Node\Expr\Assign) {
-        error_log("Assign");
         expr_use_var($expr->expr, $table, $table);
-        use_incr($expr->var, $table);
+        use_var($expr->var, $table);
     } elseif ($expr instanceof PhpParser\Node\Expr\Instanceof_) {
         print_r($expr);exit;
         expr_use_var($expr->expr, $table);
@@ -292,7 +341,7 @@ function expr_use_var($expr, &$table)
             declare_var($var, $table);
         }
     } elseif ($expr instanceof PhpParser\Node\Expr\Variable) {
-        use_incr($expr, $table, 1);
+        use_var($expr, $table, 1);
     } elseif ($expr instanceof PhpParser\Node\Expr\New_) {
         foreach ($expr->args as $arg) {
             expr_use_var($arg, $table);
