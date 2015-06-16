@@ -4,7 +4,14 @@ if (!isset($argv[1])) {
     echo <<<EOF
 Tool that find unused functions(methods).
 
-    Usage: $argv[0] <code_dir> [--lib lib_root]
+    Usage: $argv[0] <code_dir> [--lib lib_root] [--ignore-dir dir] [--ignore-method method_pattern_list_file]
+
+    --lib           You can use several libs, each lead by `--lib'
+    --ignore-dir    The code here is nonesence, so u can ignore them.
+                    For example template.
+    --ignore-method    You know the method is unused, but you still want to ignore them.
+                    For example, the method of a controller.
+                    You must put regex patterns as an array in a php file, and return them.
 
 EOF;
     exit(1);
@@ -17,7 +24,8 @@ require (__DIR__).'/logic.php';
 $table = [];
 $table_lib = [];
 $class_hierarchy = [];
-$ignore = ['vendor', 'data', 'views', 'htmlpurifier', 'messages'];
+$ignore = get_arg_n('--ignore-dir');
+// ['vendor', 'data', 'views', 'htmlpurifier', 'messages'];
 handle_dir($argv[1], 'read_func'); // build
 if ($libs = get_arg_n('--lib')) {
     foreach ($libs as $lib) {
@@ -52,15 +60,22 @@ function get_arg_n($name)
     }
     return $ret;
 }
+function get_arg($name)
+{
+    global $argv;
+    reset($argv);
+    next($argv);
+    while (key($argv)) {
+        $name_ = current($argv);
+        if ($name_ === $name) {
+            return next($argv);
+        }
+    }
+    return false;
+}
 function is_method_ignore($method)
 {
-    $ignore_method_pattern_list = [
-        '/^action[A-Z0-9]/',
-        '/^__/',
-        '/^tableName$/',
-        '/^beforeAction$/',
-        '/^model$/',
-    ];
+    $ignore_method_pattern_list = require get_arg('--ignore-method');
     foreach ($ignore_method_pattern_list as $pattern) {
         if (preg_match($pattern, $method)) {
             return true;
@@ -387,6 +402,7 @@ function all_method_incr($method)
         foreach ($v as $m => $_) {
             if ($m === $method) {
                 $table[$c][$m]++;
+                error_log("incr \$table [$c] [$m]");
             }
         }
     }
