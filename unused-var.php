@@ -132,13 +132,17 @@ function consume_stmts($stmts, &$table)
 {
     foreach ($stmts as $stmt) {
         // print_r($stmt);exit;
-        // error_log("consume statement: ".get_class($stmt));
+        error_log("consume statement: ".get_class($stmt));
         if ($stmt instanceof PhpParser\Node\Stmt\Class_) {
             throw new Exception("Error Processing Request", 1);
         }
         if ($stmt instanceof PhpParser\Node\Stmt\Unset_) {
             foreach ($stmt->vars as $var) {
                 expr_use_var($var, $table);
+            }
+        } elseif ($stmt instanceof PhpParser\Node\Stmt\Static_) {
+            foreach ($stmt->vars as $var) {
+                declare_var($var, $table);
             }
         } elseif ($stmt instanceof PhpParser\Node\Stmt\Echo_) {
             foreach ($stmt->exprs as $expr) {
@@ -287,7 +291,16 @@ function use_var($var, &$table, $init = 1)
 }
 function declare_var($var, &$table)
 {
-    if ($var instanceof PhpParser\Node\Expr\Variable || $var instanceof PhpParser\Node\Param) {
+    if ($var instanceof PhpParser\Node\Expr\Variable || $var instanceof PhpParser\Node\Param
+        || $var instanceof PhpParser\Node\Stmt\StaticVar) {
+        if ($var->default) {
+            if ($var->default instanceof PhpParser\Node\Expr\ConstFetch
+                || strpos(get_class($var->default), 'PhpParser\\Node\\Scalar\\') === 0) {
+            } else {
+                print_r($var);
+                throw new Exception("default", 1);
+            }
+        }
         $name = $var->name;
         if (!isset($table['declare_var'][$name])) {
             $table['declare_var'][$name] = $var;
